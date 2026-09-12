@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/customers.css') }}"
+>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="page-container">
+
+    <!-- Page Header -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h1>Customers</h1>
+
+            <p>
+                Customer intelligence and payment history
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- Customer Summary -->
+
+    <div class="customer-summary">
+
+        <div class="summary-card">
+
+            <div class="summary-icon">
+                <i class="fa-solid fa-users"></i>
+            </div>
+
+            <div>
+
+                <span class="summary-label">
+                    Total Customers
+                </span>
+
+                <strong id="totalCustomers">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="summary-icon">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+
+            <div>
+
+                <span class="summary-label">
+                    Successful Payments
+                </span>
+
+                <strong id="successfulPayments">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="summary-icon">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </div>
+
+            <div>
+
+                <span class="summary-label">
+                    Failed Payments
+                </span>
+
+                <strong id="failedPayments">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="summary-icon">
+                <i class="fa-solid fa-indian-rupee-sign"></i>
+            </div>
+
+            <div>
+
+                <span class="summary-label">
+                    Customer Value
+                </span>
+
+                <strong id="customerValue">
+                    ₹0
+                </strong>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Filters -->
+
+    <div class="customer-controls">
+
+        <div class="customer-search">
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input
+                type="text"
+                id="customerSearch"
+                placeholder="Search customer ID or segment..."
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <button
+            type="button"
+            id="clearSearch"
+            class="clear-search"
+        >
+            Clear
+        </button>
+
+    </div>
+
+
+    <!-- Customer Table -->
+
+    <div class="table-card">
+
+        <div class="table-header">
+
+            <div>
+
+                <h2>Customer Directory</h2>
+
+                <span id="customerCount">
+                    Loading customers...
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table class="customers-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Customer</th>
+
+                        <th>Segment</th>
+
+                        <th>Customer Since</th>
+
+                        <th>Successful</th>
+
+                        <th>Failed</th>
+
+                        <th>Success Rate</th>
+
+                        <th>Customer Value</th>
+
+                        <th>Transactions</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="customerTableBody">
+
+                    <tr>
+
+                        <td
+                            colspan="8"
+                            class="loading-cell"
+                        >
+
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+
+                            Loading customers...
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- Empty State -->
+
+        <div
+            id="emptyCustomers"
+            class="empty-state"
+            style="display:none;"
+        >
+
+            <i class="fa-solid fa-users-slash"></i>
+
+            <h3>
+                No customers found
+            </h3>
+
+            <p>
+                Try changing your search query.
+            </p>
+
+        </div>
+
+
+        <!-- Pagination -->
+
+        <div
+            id="customerPagination"
+            class="customer-pagination"
+        >
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script
+    src="{{ url_for('static', filename='js/customers.js') }}"
+></script>
+
+{% endblock %}

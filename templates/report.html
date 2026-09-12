@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+
+.report-container{
+
+    padding:30px;
+
+}
+
+.page-title{
+
+    text-align:center;
+
+    font-size:40px;
+
+    color:#1e3a8a;
+
+    margin-bottom:30px;
+
+}
+
+.report-card{
+
+    background:white;
+
+    border-radius:15px;
+
+    padding:25px;
+
+    margin-bottom:25px;
+
+    box-shadow:0 4px 12px rgba(0,0,0,.12);
+
+    transition:.3s;
+
+}
+
+.report-card:hover{
+
+    transform:translateY(-5px);
+
+    box-shadow:0 10px 25px rgba(37,99,235,.20);
+
+}
+
+.report-card h2{
+
+    color:#2563eb;
+
+    margin-bottom:20px;
+
+    border-bottom:2px solid #2563eb;
+
+    padding-bottom:10px;
+
+}
+
+.report-table{
+
+    width:100%;
+
+}
+
+.report-table td{
+
+    padding:12px;
+
+    border:none;
+
+    text-align:left;
+
+}
+
+.label{
+
+    font-weight:bold;
+
+    color:#1e3a8a;
+
+    width:220px;
+
+}
+
+.rating{
+
+    font-size:40px;
+
+    text-align:center;
+
+    color:#f59e0b;
+
+    margin-top:15px;
+
+}
+
+.verdict{
+
+    text-align:center;
+
+    font-size:24px;
+
+    font-weight:bold;
+
+    color:#16a34a;
+
+    margin-top:15px;
+
+}
+
+.summary{
+
+    line-height:1.8;
+
+}
+
+.navigation{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    margin-top:30px;
+
+}
+
+.nav-btn{
+
+    text-decoration:none;
+
+    background:#2563eb;
+
+    color:white;
+
+    padding:12px 28px;
+
+    border-radius:8px;
+
+    font-weight:bold;
+
+}
+
+.nav-btn:hover{
+
+    background:#1d4ed8;
+
+}
+
+</style>
+
+<div class="report-container">
+
+<h1 class="page-title">
+
+Executive Report
+
+</h1>
+
+<div class="report-card">
+
+<h2>Project Information</h2>
+
+<table class="report-table">
+
+<tr>
+<td class="label">Project Name</td>
+<td>{{ project.project_name }}</td>
+</tr>
+
+<tr>
+<td class="label">Domain</td>
+<td>{{ project.domain }}</td>
+</tr>
+
+<tr>
+<td class="label">Technology</td>
+<td>{{ project.tech_stack }}</td>
+</tr>
+
+<tr>
+<td class="label">Budget</td>
+<td>₹ {{ project.budget }}</td>
+</tr>
+
+<tr>
+<td class="label">Timeline</td>
+<td>{{ project.timeline }} Months</td>
+</tr>
+
+<tr>
+<td class="label">Team Size</td>
+<td>{{ project.team_size }}</td>
+</tr>
+
+</table>
+
+</div>
+
+<div class="report-card">
+
+<h2>Risk Assessment</h2>
+
+<table class="report-table">
+
+<tr>
+<td class="label">Risk Score</td>
+<td>{{ risk.score }}</td>
+</tr>
+
+<tr>
+<td class="label">Risk Level</td>
+<td>{{ risk.level }}</td>
+</tr>
+
+</table>
+
+</div>
+
+<div class="report-card">
+
+<h2>AI Recommendation</h2>
+
+<table class="report-table">
+
+<tr>
+<td class="label">Project Health</td>
+<td>{{ recommendation.health }}</td>
+</tr>
+
+<tr>
+<td class="label">Success Probability</td>
+<td>{{ recommendation.success_probability }}%</td>
+</tr>
+
+</table>
+
+</div>
+
+<div class="report-card">
+
+<h2>Market Intelligence</h2>
+
+<table class="report-table">
+
+<tr>
+<td class="label">Industry</td>
+<td>{{ market.industry }}</td>
+</tr>
+
+<tr>
+<td class="label">Market Demand</td>
+<td>{{ market.demand }}</td>
+</tr>
+
+<tr>
+<td class="label">Growth</td>
+<td>{{ market.growth }}</td>
+</tr>
+
+</table>
+
+</div>
+
+<div class="report-card">
+
+<h2>Executive Summary</h2>
+
+<p class="summary">
+
+{{ summary }}
+
+</p>
+
+</div>
+
+<div class="report-card">
+
+<h2>Overall Verdict</h2>
+
+<div class="rating">
+
+{{ rating }}
+
+</div>
+
+<div class="verdict">
+
+{{ verdict }}
+
+</div>
+
+</div>
+
+<div class="navigation">
+
+<a href="/market" class="nav-btn">
+
+← Previous
+
+</a>
+
+<a href="/download-report" class="nav-btn">
+
+    📄 Download Report
+
+</a>
+
+</div>
+
+</div>
+
+{% endblock %}

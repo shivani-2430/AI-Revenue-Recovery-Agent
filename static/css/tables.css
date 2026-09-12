@@ -1,0 +1,848 @@
+/* =========================================================
+   RECOVERAI TRANSACTIONS
+   ========================================================= */
+
+.transactions-page {
+    width: 100%;
+}
+
+
+/* =========================================================
+   PAGE HEADER
+   ========================================================= */
+
+.page-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-start;
+
+    margin-bottom: 24px;
+}
+
+
+.page-header h1 {
+
+    font-size: 27px;
+
+    font-weight: 700;
+
+    letter-spacing: -0.7px;
+}
+
+
+.page-header p {
+
+    margin-top: 6px;
+
+    color: var(--text-secondary);
+
+    font-size: 13px;
+}
+
+
+.page-header-actions {
+
+    display: flex;
+
+    gap: 9px;
+}
+
+
+.primary-button,
+.secondary-button {
+
+    height: 38px;
+
+    padding: 0 14px;
+
+    border-radius: 8px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+.primary-button {
+
+    background: var(--indigo);
+
+    color: white;
+
+    box-shadow:
+        0 5px 12px rgba(79,70,229,0.18);
+}
+
+
+.primary-button:hover {
+
+    opacity: 0.92;
+}
+
+
+.secondary-button {
+
+    background: white;
+
+    color: var(--text-primary);
+
+    border: 1px solid var(--border);
+}
+
+
+/* =========================================================
+   SUMMARY
+   ========================================================= */
+
+.transaction-summary-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 15px;
+
+    margin-bottom: 17px;
+}
+
+
+.summary-card {
+
+    background: white;
+
+    border: 1px solid var(--border);
+
+    border-radius: 13px;
+
+    padding: 17px 19px;
+
+    box-shadow: var(--shadow-sm);
+}
+
+
+.summary-label {
+
+    font-size: 11px;
+
+    color: var(--text-secondary);
+
+    font-weight: 500;
+}
+
+
+.summary-value {
+
+    margin-top: 7px;
+
+    font-size: 23px;
+
+    font-weight: 700;
+
+    letter-spacing: -0.5px;
+}
+
+
+.summary-meta {
+
+    margin-top: 7px;
+
+    font-size: 10px;
+
+    color: var(--text-muted);
+}
+
+
+.danger-text {
+
+    color: var(--red);
+}
+
+
+.success-text {
+
+    color: var(--green);
+}
+
+
+/* =========================================================
+   TOOLBAR
+   ========================================================= */
+
+.transaction-toolbar {
+
+    min-height: 68px;
+
+    padding: 13px 15px;
+
+    margin-bottom: 15px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 15px;
+}
+
+
+.filter-search {
+
+    width: 340px;
+
+    height: 38px;
+
+    background: #F5F7FB;
+
+    border-radius: 8px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 0 12px;
+
+    color: var(--text-muted);
+}
+
+
+.filter-search i {
+
+    font-size: 12px;
+}
+
+
+.filter-search input {
+
+    width: 100%;
+
+    border: none;
+
+    outline: none;
+
+    background: transparent;
+
+    font-size: 11px;
+
+    color: var(--text-primary);
+}
+
+
+.filter-search input::placeholder {
+
+    color: #8B96A9;
+}
+
+
+.filter-group {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+
+.filter-group select {
+
+    height: 38px;
+
+    padding: 0 10px;
+
+    border: 1px solid var(--border);
+
+    border-radius: 8px;
+
+    background: white;
+
+    color: var(--text-primary);
+
+    font-size: 10px;
+
+    outline: none;
+
+    min-width: 130px;
+}
+
+
+.filter-button {
+
+    height: 38px;
+
+    padding: 0 11px;
+
+    border-radius: 8px;
+
+    color: var(--text-secondary);
+
+    font-size: 10px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+}
+
+
+.filter-button:hover {
+
+    background: #F3F5F9;
+
+    color: var(--indigo);
+}
+
+
+/* =========================================================
+   TABLE CARD
+   ========================================================= */
+
+.transactions-table-card {
+
+    overflow: hidden;
+}
+
+
+.table-topbar {
+
+    min-height: 67px;
+
+    padding: 14px 19px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    border-bottom: 1px solid var(--border);
+}
+
+
+.table-topbar h2 {
+
+    font-size: 15px;
+
+    font-weight: 650;
+}
+
+
+.table-topbar span {
+
+    display: block;
+
+    margin-top: 4px;
+
+    font-size: 10px;
+
+    color: var(--text-muted);
+}
+
+
+.table-pagination {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+
+.table-pagination > span {
+
+    margin: 0;
+
+    font-size: 10px;
+
+    color: var(--text-secondary);
+}
+
+
+.pagination-button {
+
+    width: 28px;
+
+    height: 28px;
+
+    border: 1px solid var(--border);
+
+    border-radius: 7px;
+
+    color: var(--text-secondary);
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    font-size: 9px;
+}
+
+
+.pagination-button:disabled {
+
+    opacity: 0.35;
+
+    cursor: default;
+}
+
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.table-wrapper {
+
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+
+.transactions-table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+    min-width: 1050px;
+}
+
+
+.transactions-table th {
+
+    height: 42px;
+
+    padding: 0 18px;
+
+    background: #FAFBFD;
+
+    text-align: left;
+
+    border-bottom: 1px solid var(--border);
+
+    color: var(--text-muted);
+
+    font-size: 9px;
+
+    font-weight: 600;
+
+    white-space: nowrap;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.3px;
+}
+
+
+.transactions-table td {
+
+    height: 67px;
+
+    padding: 0 18px;
+
+    border-bottom: 1px solid #EEF0F4;
+
+    font-size: 10px;
+
+    color: var(--text-secondary);
+
+    white-space: nowrap;
+}
+
+
+.transactions-table tbody tr {
+
+    transition: background 0.15s ease;
+}
+
+
+.transactions-table tbody tr:hover {
+
+    background: #FAFBFF;
+}
+
+
+/* =========================================================
+   TRANSACTION
+   ========================================================= */
+
+.transaction-id {
+
+    font-size: 11px;
+
+    font-weight: 650;
+
+    color: var(--text-primary);
+}
+
+
+.transaction-time {
+
+    margin-top: 4px;
+
+    font-size: 9px;
+
+    color: var(--text-muted);
+}
+
+
+.amount {
+
+    color: var(--text-primary);
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   CUSTOMER
+   ========================================================= */
+
+.customer-cell {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+}
+
+
+.customer-avatar {
+
+    width: 29px;
+
+    height: 29px;
+
+    border-radius: 50%;
+
+    background: #EEF0FF;
+
+    color: var(--indigo);
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    font-size: 9px;
+
+    font-weight: 700;
+}
+
+
+.customer-cell strong {
+
+    display: block;
+
+    color: var(--text-primary);
+
+    font-size: 10px;
+
+    font-weight: 600;
+}
+
+
+.customer-cell span {
+
+    display: block;
+
+    margin-top: 3px;
+
+    font-size: 8px;
+
+    color: var(--text-muted);
+}
+
+
+/* =========================================================
+   PAYMENT METHOD
+   ========================================================= */
+
+.method-badge {
+
+    padding: 5px 8px;
+
+    background: #F4F6FA;
+
+    border-radius: 6px;
+
+    color: #4E5B73;
+
+    font-size: 9px;
+
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   FAILURE
+   ========================================================= */
+
+.failure-reason {
+
+    color: #4B5870;
+
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   RECOVERY SCORE
+   ========================================================= */
+
+.recovery-score {
+
+    width: 70px;
+}
+
+
+.score-number {
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    color: var(--green);
+
+    margin-bottom: 5px;
+}
+
+
+.score-bar {
+
+    width: 65px;
+
+    height: 4px;
+
+    background: #E7EAF0;
+
+    border-radius: 10px;
+
+    overflow: hidden;
+}
+
+
+.score-bar span {
+
+    display: block;
+
+    height: 100%;
+
+    background: var(--green);
+
+    border-radius: inherit;
+}
+
+
+.recovery-score.low .score-number {
+
+    color: var(--red);
+}
+
+
+.recovery-score.low .score-bar span {
+
+    background: var(--red);
+}
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.status-badge {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    padding: 6px 8px;
+
+    border-radius: 7px;
+
+    font-size: 8px;
+
+    font-weight: 700;
+
+    letter-spacing: 0.25px;
+}
+
+
+.status-badge.recoverable {
+
+    color: #087A58;
+
+    background: #E8F8F2;
+}
+
+
+.status-badge.recovered {
+
+    color: #087A58;
+
+    background: #E8F8F2;
+}
+
+
+.status-badge.escalate {
+
+    color: var(--indigo);
+
+    background: #EEF0FF;
+}
+
+
+.status-badge.stopped {
+
+    color: var(--red);
+
+    background: #FDECEC;
+}
+
+
+/* =========================================================
+   ROW ACTION
+   ========================================================= */
+
+.row-action {
+
+    width: 28px;
+
+    height: 28px;
+
+    border-radius: 7px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    color: var(--indigo);
+
+    background: #F1F2FF;
+
+    font-size: 9px;
+
+    transition: all 0.15s ease;
+}
+
+
+.row-action:hover {
+
+    background: var(--indigo);
+
+    color: white;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.empty-state {
+
+    padding: 70px 20px;
+
+    text-align: center;
+}
+
+
+.empty-state > i {
+
+    font-size: 26px;
+
+    color: var(--indigo);
+
+    margin-bottom: 13px;
+}
+
+
+.empty-state h3 {
+
+    font-size: 15px;
+}
+
+
+.empty-state p {
+
+    margin-top: 6px;
+
+    color: var(--text-muted);
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1200px) {
+
+    .transaction-summary-grid {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .transaction-toolbar {
+
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+    .filter-search {
+
+        width: 100%;
+    }
+
+    .filter-group {
+
+        width: 100%;
+
+        flex-wrap: wrap;
+    }
+}
+
+
+@media (max-width: 700px) {
+
+    .page-header {
+
+        flex-direction: column;
+
+        gap: 15px;
+    }
+
+    .transaction-summary-grid {
+
+        grid-template-columns: 1fr;
+    }
+
+    .filter-group select {
+
+        flex: 1;
+
+        min-width: 120px;
+    }
+}

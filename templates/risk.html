@@ -1,0 +1,806 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="risk-page">
+
+    <!-- Header -->
+
+    <div class="risk-header">
+
+        <div>
+            <h1>Risk Assessment</h1>
+            <p>Home <span>/ Risk Assessment</span></p>
+        </div>
+
+    </div>
+    <!-- Risk Assessment Navigation -->
+
+    <div class="risk-tabs">
+
+        <button class="risk-tab active" onclick="showRiskSection('overview', this)">
+            <i class="fa-solid fa-chart-pie"></i>
+            Risk Overview
+        </button>
+
+        <button class="risk-tab" onclick="showRiskSection('feasibility', this)">
+            <i class="fa-solid fa-circle-check"></i>
+            Feasibility
+        </button>
+
+        <button class="risk-tab" onclick="showRiskSection('ml', this)">
+            <i class="fa-solid fa-brain"></i>
+            AI Prediction
+        </button>
+
+    </div>
+
+    <!-- Risk Overview Section -->
+
+    <div id="overview" class="risk-section active-section">
+
+    <div class="risk-layout">
+
+        <!-- LEFT PANEL -->
+
+        <div class="risk-left">
+
+            <!-- Project Details -->
+
+            <div class="risk-card">
+
+                <div class="section-header">
+
+                    <div>
+
+                        <h2>
+
+                            <i class="fa-solid fa-chart-line"></i>
+
+                            Risk Breakdown
+
+                        </h2>
+
+                        <p>
+
+                            Key contributors to the overall project risk.
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="project-box">
+
+                    <label>Project Name</label>
+
+                    <h3>
+                        {% if project %}
+                            {{ project.project_name }}
+                        {% else %}
+                            No Project
+                        {% endif %}
+                    </h3>
+
+                </div>
+
+            </div>
+
+            <!-- Overall Risk -->
+
+            <div class="risk-card">
+
+                <div class="card-title">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <h2>Overall Risk Score</h2>
+                </div>
+
+                <div class="gauge-container">
+
+                    <svg class="gauge" viewBox="0 0 220 130">
+
+                        <!-- Background -->
+
+                        <path
+                            d="M20 110 A90 90 0 0 1 200 110"
+                            fill="none"
+                            stroke="#E2E8F0"
+                            stroke-width="16"
+                            stroke-linecap="round"/>
+
+                        <!-- Progress -->
+
+                        <path
+                            d="M20 110 A90 90 0 0 1 200 110"
+                            fill="none"
+                            stroke="{% if risk_level == 'HIGH RISK' %}#EF4444{% elif risk_level == 'MEDIUM RISK' %}#F59E0B{% else %}#22C55E{% endif %}"
+                            stroke-dasharray="{{ (risk_score * 282 / 100)|int }} 282"
+                            stroke-width="16"
+                            stroke-linecap="round"/>
+
+                    </svg>
+
+                    <div class="gauge-text">
+                        <h1>{{ risk_score }}%</h1>
+                        <small>out of 100</small>
+                    </div>
+
+                </div>
+
+                <div class="risk-status {{ 'high-risk' if risk_level == 'HIGH RISK' else 'medium-risk' if risk_level == 'MEDIUM RISK' else 'low-risk' }}">
+
+                    {{ risk_level }}
+
+                </div>
+                <div class="info-box" style="margin-top:20px;">
+
+                    <i class="fa-solid fa-brain"></i>
+
+                    <div>
+
+                        <h3>Machine Learning Prediction</h3>
+
+                        <p>
+                            <strong>{{ ml_prediction }}</strong>
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Risk Summary -->
+
+            <div class="risk-card">
+
+                <div class="card-title">
+                    <i class="fa-solid fa-file-lines"></i>
+                    <h2>Risk Summary</h2>
+                </div>
+
+                <div class="summary-card">
+
+                    {{ summary }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT PANEL -->
+
+        <div class="risk-right">
+
+            <div class="risk-card">
+
+                <div class="card-title">
+                    <i class="fa-solid fa-list-check"></i>
+                    <h2>Risk Factors</h2>
+                </div>
+
+                <!-- Remaining Risk Factors continue in Part 2 -->
+                <!-- Factor -->
+
+                <div class="factor">
+
+                    <div class="factor-top">
+
+                        <div class="factor-icon">
+                            <i class="fa-solid fa-user-group"></i>
+                        </div>
+
+                        <div>
+                            <h3>Team Size</h3>
+                            <p>{{ project.team_size }} Members</p>
+                        </div>
+
+                        <span class="badge {{ 'high' if team_level=='HIGH' else 'medium' if team_level=='MEDIUM' else 'low' }}">
+                            {{ team_level }}
+                        </span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-fill"
+                            style="width:{{ team_percent }}%; background:#2563eb;">
+                        </div>
+
+                    </div>
+
+                </div>
+                <!-- Budget -->
+
+                <div class="factor">
+
+                    <div class="factor-top">
+
+                        <div class="factor-icon">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+
+                        <div>
+                            <h3>Budget</h3>
+                            <p>₹{{ project.budget }}</p>
+                        </div>
+
+                        <span class="badge {{ 'high' if budget_level=='HIGH' else 'medium' if budget_level=='MEDIUM' else 'low' }}">
+                            {{ budget_level }}
+                        </span>
+
+                    </div>
+
+                    <div class="progress">
+                        <div class="progress-fill"
+                             style="width:{{ budget_percent }}%; background:#ef4444;">
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Timeline -->
+
+                <div class="factor">
+
+                    <div class="factor-top">
+
+                        <div class="factor-icon">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+
+                        <div>
+                            <h3>Timeline</h3>
+                            <p>{{ project.timeline }} Months</p>
+                        </div>
+
+                        <span class="badge {{ 'high' if timeline_level=='HIGH' else 'medium' if timeline_level=='MEDIUM' else 'low' }}">
+                            {{ timeline_level }}
+                        </span>
+
+                    </div>
+
+                    <div class="progress">
+                        <div class="progress-fill"
+                             style="width:{{ timeline_percent }}%; background:#f59e0b;">
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Technology -->
+
+                <div class="factor">
+
+                    <div class="factor-top">
+
+                        <div class="factor-icon">
+                            <i class="fa-solid fa-laptop-code"></i>
+                        </div>
+
+                        <div>
+                            <h3>Technology Stack</h3>
+                            <p>{{ project.tech_stack }}</p>
+                        </div>
+
+                        <span class="badge {{ 'high' if technology_level=='HIGH' else 'medium' if technology_level=='MEDIUM' else 'low' }}">
+                            {{ technology_level }}
+                        </span>
+
+                    </div>
+
+                    <div class="progress">
+                        <div class="progress-fill"
+                             style="width:{{ technology_percent }}%; background:#22c55e;">
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Recommendation -->
+
+                <div class="info-box">
+
+                    <i class="fa-solid fa-circle-info"></i>
+
+                    <div>
+
+                        <h3>Recommendation</h3>
+
+                        <p>
+                            Increase the budget and extend the timeline to reduce project risk and improve delivery success.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<!-- Feasibility Section -->
+
+<div id="feasibility" class="risk-section">
+
+    <div class="feasibility-header">
+
+        <div>
+            <span class="feasibility-label">
+                PROJECT FEASIBILITY
+            </span>
+
+            <h2>Can this project realistically be executed?</h2>
+
+            <p>
+                Feasibility is evaluated using the project's budget,
+                team size, timeline, technology stack and overall risk.
+            </p>
+        </div>
+
+    </div>
+
+
+    <!-- Feasibility Hero -->
+
+    <div class="feasibility-hero">
+
+        <div class="feasibility-score-card">
+
+            <div
+                class="feasibility-ring"
+                style="--score: {{ feasibility_score }};"
+            >
+
+                <div class="feasibility-ring-inner">
+
+                    <strong>{{ feasibility_score }}%</strong>
+
+                    <span>Feasibility</span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="feasibility-verdict">
+
+            <span class="verdict-label">
+                PROJECT VERDICT
+            </span>
+
+            <h1>{{ feasibility_level }}</h1>
+
+            <p>
+                {{ feasibility_message }}
+            </p>
+
+            <div class="decision-pill">
+                <i class="fa-solid fa-circle-check"></i>
+                {{ feasibility_status }}
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Resource Readiness -->
+
+    <div class="feasibility-card">
+
+        <div class="feasibility-card-header">
+
+            <div>
+                <h2>Resource Readiness</h2>
+                <p>Current project resources and constraints.</p>
+            </div>
+
+        </div>
+
+
+        <div class="readiness-grid">
+
+            <!-- Budget -->
+
+            <div class="readiness-item">
+
+                <div class="readiness-top">
+
+                    <span>
+                        <i class="fa-solid fa-wallet"></i>
+                        Budget
+                    </span>
+
+                    <strong>{{ budget_readiness }}%</strong>
+
+                </div>
+
+                <div class="readiness-bar">
+                    <div style="width:{{ budget_readiness }}%;"></div>
+                </div>
+
+            </div>
+
+
+            <!-- Team -->
+
+            <div class="readiness-item">
+
+                <div class="readiness-top">
+
+                    <span>
+                        <i class="fa-solid fa-users"></i>
+                        Team
+                    </span>
+
+                    <strong>{{ team_readiness }}%</strong>
+
+                </div>
+
+                <div class="readiness-bar">
+                    <div style="width:{{ team_readiness }}%;"></div>
+                </div>
+
+            </div>
+
+
+            <!-- Timeline -->
+
+            <div class="readiness-item">
+
+                <div class="readiness-top">
+
+                    <span>
+                        <i class="fa-solid fa-calendar-days"></i>
+                        Timeline
+                    </span>
+
+                    <strong>{{ timeline_readiness }}%</strong>
+
+                </div>
+
+                <div class="readiness-bar">
+                    <div style="width:{{ timeline_readiness }}%;"></div>
+                </div>
+
+            </div>
+
+
+            <!-- Technology -->
+
+            <div class="readiness-item">
+
+                <div class="readiness-top">
+
+                    <span>
+                        <i class="fa-solid fa-code"></i>
+                        Technology
+                    </span>
+
+                    <strong>{{ technology_readiness }}%</strong>
+
+                </div>
+
+                <div class="readiness-bar">
+                    <div style="width:{{ technology_readiness }}%;"></div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Feasibility Insight -->
+
+    <div class="feasibility-insight">
+
+        <div class="insight-icon">
+            <i class="fa-solid fa-lightbulb"></i>
+        </div>
+
+        <div>
+
+            <span>FEASIBILITY INSIGHT</span>
+
+            <h3>{{ feasibility_message }}</h3>
+
+            <p>
+                The feasibility assessment provides an early indication
+                of whether the current project configuration can be
+                executed successfully.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- Final Decision -->
+
+    <div 
+        class="feasibility-decision"
+        onclick="goToMLPrediction()"
+    >
+
+        <div>
+
+            <span>FINAL FEASIBILITY DECISION</span>
+
+            <h2>{{ feasibility_status }}</h2>
+
+        </div>
+
+        <i class="fa-solid fa-arrow-right"></i>
+
+    </div>
+
+</div>
+<!-- AI Risk Prediction Section -->
+
+<div id="ml" class="risk-section">
+
+    <!-- Header -->
+
+    <div class="ai-prediction-header">
+
+        <span class="ai-label">
+            AI RISK PREDICTION
+        </span>
+
+        <h2>AI Risk Prediction</h2>
+
+        <p>
+            Machine learning based prediction of project risk using
+            the Random Forest classification model.
+        </p>
+
+    </div>
+
+
+    <!-- Main Prediction -->
+
+    <div class="prediction-hero">
+
+        <div class="prediction-content">
+
+            <span class="prediction-label">
+                PREDICTED PROJECT RISK
+            </span>
+
+            <h1 class="prediction-result">
+                {{ ml_prediction | upper }}
+            </h1>
+
+            <p>
+                Random Forest prediction for the submitted project.
+            </p>
+
+        </div>
+
+        <div class="prediction-icon">
+
+            <i class="fa-solid fa-brain"></i>
+
+        </div>
+
+    </div>
+
+
+    <!-- Prediction Process -->
+
+    <div class="prediction-card">
+
+        <div class="prediction-card-header">
+
+            <h2>Prediction Process</h2>
+
+            <p>
+                How project information is transformed into a risk prediction.
+            </p>
+
+        </div>
+
+
+        <div class="prediction-flow">
+
+            <!-- Step 1 -->
+
+            <div class="prediction-step">
+
+                <div class="step-icon">
+                    <i class="fa-solid fa-database"></i>
+                </div>
+
+                <h3>Project Data</h3>
+
+                <p>
+                    Project characteristics are collected from user input.
+                </p>
+
+            </div>
+
+
+            <div class="flow-arrow">
+                <i class="fa-solid fa-arrow-right"></i>
+            </div>
+
+
+            <!-- Step 2 -->
+
+            <div class="prediction-step">
+
+                <div class="step-icon">
+                    <i class="fa-solid fa-gears"></i>
+                </div>
+
+                <h3>Data Encoding</h3>
+
+                <p>
+                    Categorical values are converted into numerical features.
+                </p>
+
+            </div>
+
+
+            <div class="flow-arrow">
+                <i class="fa-solid fa-arrow-right"></i>
+            </div>
+
+
+            <!-- Step 3 -->
+
+            <div class="prediction-step">
+
+                <div class="step-icon">
+                    <i class="fa-solid fa-tree"></i>
+                </div>
+
+                <h3>Random Forest</h3>
+
+                <p>
+                    The trained classification model analyzes the features.
+                </p>
+
+            </div>
+
+
+            <div class="flow-arrow">
+                <i class="fa-solid fa-arrow-right"></i>
+            </div>
+
+
+            <!-- Step 4 -->
+
+            <div class="prediction-step">
+
+                <div class="step-icon">
+                    <i class="fa-solid fa-chart-simple"></i>
+                </div>
+
+                <h3>Risk Prediction</h3>
+
+                <p>
+                    The model returns the predicted project risk category.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Assessment Comparison -->
+
+    <div class="prediction-comparison">
+
+        <!-- Existing Risk Engine -->
+
+        <div class="comparison-card">
+
+            <div class="comparison-icon">
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
+
+            <span>RISK ASSESSMENT</span>
+
+            <h2>{{ risk_score }}%</h2>
+
+            <p>
+                Overall risk score calculated from project risk factors.
+            </p>
+
+        </div>
+
+
+        <!-- Random Forest -->
+
+        <div class="comparison-card">
+
+            <div class="comparison-icon">
+                <i class="fa-solid fa-brain"></i>
+            </div>
+
+            <span>RANDOM FOREST</span>
+
+            <h2>{{ ml_prediction | upper }}</h2>
+
+            <p>
+                Machine learning classification based on trained project data.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- Combined Assessment -->
+
+    <div class="combined-assessment">
+
+        <div class="combined-icon">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+
+        <div>
+
+            <span>COMBINED ASSESSMENT</span>
+
+            <h2>{{ ml_prediction | upper }}</h2>
+
+            <p>
+                The Random Forest model predicts this risk category based
+                on patterns learned from the training dataset.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+<script>
+
+function showRiskSection(sectionId, button) {
+
+    const sections = document.querySelectorAll(".risk-section");
+    const tabs = document.querySelectorAll(".risk-tab");
+
+    sections.forEach(section => {
+        section.classList.remove("active-section");
+    });
+
+    tabs.forEach(tab => {
+        tab.classList.remove("active");
+    });
+
+    document.getElementById(sectionId).classList.add("active-section");
+
+    button.classList.add("active");
+}
+
+</script>
+<script>
+
+function goToMLPrediction() {
+
+    const mlTab = document.querySelector(
+        '.risk-tab[onclick*="ml"]'
+    );
+
+    showRiskSection("ml", mlTab);
+
+}
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,664 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="decision-page">
+
+    <!-- ===========================
+         PAGE HEADER
+    ============================ -->
+
+    <section class="page-header">
+
+        <div class="header-content">
+
+            <h1>
+                <i class="fa-solid fa-microchip"></i>
+                AI Decision Simulator
+            </h1>
+
+            <p>
+                Simulate strategic project decisions and evaluate their impact
+                before implementation.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- ===========================
+         CURRENT PROJECT SNAPSHOT
+    ============================ -->
+
+    <section class="snapshot-section">
+
+        <div class="section-title">
+
+            <h2>
+
+                <i class="fa-solid fa-chart-simple"></i>
+
+                Current Project Snapshot
+
+            </h2>
+
+        </div>
+
+
+        <div class="snapshot-panel">
+
+            <div class="snapshot-item">
+
+                <span class="label">
+                    Project Name
+                </span>
+
+                <span class="value">
+
+                    {% if latest_project %}
+                        {{ latest_project.project_name }}
+                    {% else %}
+                        —
+                    {% endif %}
+
+                </span>
+
+            </div>
+
+
+
+            <div class="snapshot-item">
+
+                <span class="label">
+                    Current Budget
+                </span>
+
+                <span class="value">
+
+                    {% if latest_project %}
+                        ₹{{ "{:,.0f}".format(latest_project.budget) }}
+                    {% else %}
+                        —
+                    {% endif %}
+
+                </span>
+
+            </div>
+
+
+
+            <div class="snapshot-item">
+
+                <span class="label">
+                    Timeline
+                </span>
+
+                <span class="value">
+
+                    {% if latest_project %}
+                        {{ latest_project.timeline }} Months
+                    {% else %}
+                        —
+                    {% endif %}
+
+                </span>
+
+            </div>
+
+
+
+            <div class="snapshot-item">
+
+                <span class="label">
+                    Total Projects
+                </span>
+
+                <span class="value">
+
+                    {{ total_projects }}
+
+                </span>
+
+            </div>
+
+
+
+            <div class="snapshot-item">
+
+                <span class="label">
+                    Domains Covered
+                </span>
+
+                <span class="value">
+
+                    {{ unique_domains }}
+
+                </span>
+
+            </div>
+
+
+
+            <div class="snapshot-item">
+
+                <span class="label">
+                    Reports Generated
+                </span>
+
+                <span class="value">
+
+                    {{ reports_generated }}
+
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ===========================
+         SIMULATION CONTROLS
+    ============================ -->
+
+    <section class="simulation-section">
+
+        <div class="section-title">
+
+            <h2>
+
+                <i class="fa-solid fa-sliders"></i>
+
+                Simulation Controls
+
+            </h2>
+
+        </div>
+
+
+        <div class="control-grid">
+
+
+            <!-- Budget Card -->
+
+            <div class="control-card">
+
+                <div class="control-header">
+
+                    <h3>
+
+                        <i class="fa-solid fa-wallet"></i>
+
+                        Budget Adjustment
+
+                    </h3>
+
+                </div>
+
+
+                <div class="current-value">
+
+                    <span>Current Budget</span>
+
+                    <strong>
+
+                        {% if latest_project %}
+                            ₹{{ "{:,.0f}".format(latest_project.budget) }}
+                        {% else %}
+                            ₹0
+                        {% endif %}
+
+                    </strong>
+
+                </div>
+
+
+                <div class="option-group">
+
+                    <button
+                        class="option-btn"
+                        data-budget="10">
+
+                        +10%
+
+                    </button>
+
+
+                    <button
+                        class="option-btn active-option"
+                        data-budget="20">
+
+                        +20%
+
+                    </button>
+
+
+                    <button
+                        class="option-btn"
+                        data-budget="30">
+
+                        +30%
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Timeline Card -->
+
+            <div class="control-card">
+
+                <div class="control-header">
+
+                    <h3>
+
+                        <i class="fa-solid fa-calendar-days"></i>
+
+                        Timeline Adjustment
+
+                    </h3>
+
+                </div>
+
+
+                <div class="current-value">
+
+                    <span>Current Timeline</span>
+
+                    <strong>
+
+                        {% if latest_project %}
+                            {{ latest_project.timeline }} Months
+                        {% else %}
+                            0 Months
+                        {% endif %}
+
+                    </strong>
+
+                </div>
+
+
+                <div class="option-group">
+
+                    <button
+                        class="option-btn"
+                        data-time="1">
+
+                        +1 Month
+
+                    </button>
+
+
+                    <button
+                        class="option-btn active-option"
+                        data-time="2">
+
+                        +2 Months
+
+                    </button>
+
+
+                    <button
+                        class="option-btn"
+                        data-time="3">
+
+                        +3 Months
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="simulate-button">
+
+            <button
+                id="runSimulation"
+                class="run-btn">
+
+                <i class="fa-solid fa-wave-square"></i>
+
+                Run Simulation
+
+            </button>
+
+        </div>
+
+    </section>
+    <!-- ===========================
+         SIMULATION RESULTS
+    ============================ -->
+
+    <section class="prediction-section">
+
+        <div class="section-title">
+
+            <h2>
+
+                <i class="fa-solid fa-diagram-project"></i>
+
+                Simulation Results
+
+            </h2>
+
+        </div>
+
+
+        <div id="simulation-result">
+
+            <div class="waiting-panel">
+
+                <div class="waiting-content">
+
+                    <i class="fa-solid fa-chart-area"></i>
+
+                    <h3>Ready to Simulate</h3>
+
+                    <p>
+
+                        Adjust the project budget or timeline
+                        and click <strong>Run Simulation</strong>
+                        to evaluate the projected impact on
+                        project success, delivery schedule,
+                        resource utilization and overall risk.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ===========================
+         RESULT TEMPLATE
+         (Hidden Initially)
+    ============================ -->
+
+    <section
+        id="simulation-template"
+        class="result-section"
+        style="display:none;">
+
+        <div class="result-grid">
+
+
+            <!-- Before -->
+
+            <div class="comparison-card">
+
+                <div class="comparison-header">
+
+                    <h3>
+
+                        <i class="fa-solid fa-arrow-left"></i>
+
+                        Current Project
+
+                    </h3>
+
+                </div>
+
+                <div class="comparison-body">
+
+                    <div class="metric">
+
+                        <span>Budget</span>
+
+                        <strong id="beforeBudget">
+
+                            ₹450,000
+
+                        </strong>
+
+                    </div>
+
+                    <div class="metric">
+
+                        <span>Timeline</span>
+
+                        <strong id="beforeTimeline">
+
+                            6 Months
+
+                        </strong>
+
+                    </div>
+
+                    <div class="metric">
+
+                        <span>Risk</span>
+
+                        <strong id="beforeRisk">
+
+                            Medium
+
+                        </strong>
+
+                    </div>
+
+                    <div class="metric">
+
+                        <span>Success Rate</span>
+
+                        <strong id="beforeSuccess">
+
+                            72%
+
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- After -->
+
+            <div class="comparison-card prediction-card">
+
+                <div class="comparison-header">
+
+                    <h3>
+
+                        <i class="fa-solid fa-arrow-right"></i>
+
+                        Predicted Outcome
+
+                    </h3>
+
+                </div>
+
+                <div class="comparison-body">
+
+                    <div class="metric">
+
+                        <span>Budget</span>
+
+                        <strong id="afterBudget">
+
+                            ₹540,000
+
+                        </strong>
+
+                    </div>
+
+                    <div class="metric">
+
+                        <span>Timeline</span>
+
+                        <strong id="afterTimeline">
+
+                            5 Months
+
+                        </strong>
+
+                    </div>
+
+                    <div class="metric">
+
+                        <span>Risk</span>
+
+                        <strong id="afterRisk">
+
+                            Low
+
+                        </strong>
+
+                    </div>
+
+                    <div class="metric">
+
+                        <span>Success Rate</span>
+
+                        <strong id="afterSuccess">
+
+                            86%
+
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- AI Analysis -->
+
+        <div class="analysis-card">
+
+            <div class="analysis-header">
+
+                <h3>
+
+                    <i class="fa-solid fa-microchip"></i>
+
+                    AI Decision Analysis
+
+                </h3>
+
+            </div>
+
+            <p id="aiExplanation">
+
+                The selected simulation parameters indicate
+                improved resource allocation and delivery
+                efficiency. Increasing the project budget
+                enables better testing coverage and faster
+                implementation, resulting in a lower overall
+                project risk and higher probability of success.
+
+            </p>
+
+        </div>
+
+
+
+        <!-- Impact Summary -->
+
+        <div class="impact-grid">
+
+            <div class="impact-card">
+
+                <h4>Budget Efficiency</h4>
+
+                <span id="budgetEfficiency">
+
+                    +18%
+
+                </span>
+
+            </div>
+
+            <div class="impact-card">
+
+                <h4>Timeline Improvement</h4>
+
+                <span id="timelineImprovement">
+
+                    1 Month Faster
+
+                </span>
+
+            </div>
+
+            <div class="impact-card">
+
+                <h4>Risk Reduction</h4>
+
+                <span id="riskReduction">
+
+                    -22%
+
+                </span>
+
+            </div>
+
+            <div class="impact-card">
+
+                <h4>Success Increase</h4>
+
+                <span id="successIncrease">
+
+                    +14%
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- Action Buttons -->
+
+        <div class="action-buttons">
+
+            <button
+                id="resetSimulation"
+                class="secondary-btn">
+
+                <i class="fa-solid fa-rotate-left"></i>
+
+                Reset
+
+            </button>
+
+
+            <button
+                id="applySimulation"
+                class="primary-btn">
+
+                <i class="fa-solid fa-check"></i>
+
+                Apply Scenario
+
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
+{% endblock %}

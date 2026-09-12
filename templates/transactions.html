@@ -1,0 +1,1302 @@
+{% extends "base.html" %}
+
+{% block title %}
+RecoverAI | Transactions
+{% endblock %}
+
+{% block extra_css %}
+
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/tables.css') }}"
+>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="transactions-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h1>Transactions</h1>
+
+            <p>
+                Monitor payment failures, recovery potential,
+                and AI-driven recovery decisions.
+            </p>
+
+        </div>
+
+        <div class="page-header-actions">
+
+            <button class="secondary-button">
+
+                <i class="fa-solid fa-download"></i>
+
+                Export
+
+            </button>
+
+            <button class="primary-button">
+
+                <i class="fa-solid fa-plus"></i>
+
+                Add Transaction
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         TRANSACTION SUMMARY
+    ====================================================== -->
+
+    <div class="transaction-summary-grid">
+
+        <div class="summary-card">
+
+            <div class="summary-label">
+                Total Transactions
+            </div>
+
+            <div class="summary-value">
+                12,482
+            </div>
+
+            <div class="summary-meta">
+                Last 24 hours
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="summary-label">
+                Failed Payments
+            </div>
+
+            <div class="summary-value">
+                4,821
+            </div>
+
+            <div class="summary-meta danger-text">
+                38.6% of transactions
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="summary-label">
+                Revenue at Risk
+            </div>
+
+            <div class="summary-value">
+                ₹18.42L
+            </div>
+
+            <div class="summary-meta danger-text">
+                Requires attention
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="summary-label">
+                Recovery Eligible
+            </div>
+
+            <div class="summary-value">
+                3,102
+            </div>
+
+            <div class="summary-meta success-text">
+                64.3% of failures
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FILTER BAR
+    ====================================================== -->
+
+    <div class="transaction-toolbar card">
+
+        <div class="filter-search">
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input
+                id="transactionSearch"
+                type="text"
+                placeholder="Search transaction ID or customer..."
+            >
+
+        </div>
+
+
+        <div class="filter-group">
+
+            <select id="statusFilter">
+
+                <option value="all">
+                    All Status
+                </option>
+
+                <option value="failed">
+                    Failed
+                </option>
+
+                <option value="recoverable">
+                    Recoverable
+                </option>
+
+                <option value="recovered">
+                    Recovered
+                </option>
+
+            </select>
+
+
+            <select id="failureFilter">
+
+                <option value="all">
+                    All Failure Reasons
+                </option>
+
+                <option value="network">
+                    Network Error
+                </option>
+
+                <option value="bank">
+                    Bank Decline
+                </option>
+
+                <option value="funds">
+                    Insufficient Funds
+                </option>
+
+                <option value="auth">
+                    Authentication Failed
+                </option>
+
+                <option value="gateway">
+                    Gateway Timeout
+                </option>
+
+            </select>
+
+
+            <select id="methodFilter">
+
+                <option value="all">
+                    Payment Method
+                </option>
+
+                <option value="upi">
+                    UPI
+                </option>
+
+                <option value="card">
+                    Card
+                </option>
+
+                <option value="netbanking">
+                    Net Banking
+                </option>
+
+                <option value="wallet">
+                    Wallet
+                </option>
+
+            </select>
+
+
+            <button
+                class="filter-button"
+                id="clearFilters"
+            >
+
+                <i class="fa-solid fa-filter-circle-xmark"></i>
+
+                Clear
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         TRANSACTION TABLE
+    ====================================================== -->
+
+    <div class="transactions-table-card card">
+
+        <div class="table-topbar">
+
+            <div>
+
+                <h2>
+                    Payment Activity
+                </h2>
+
+                <span id="transactionCount">
+                    Showing 8 transactions
+                </span>
+
+            </div>
+
+
+            <div class="table-pagination">
+
+                <button
+                    class="pagination-button"
+                    disabled
+                >
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+
+                <span>
+                    1 of 156
+                </span>
+
+                <button class="pagination-button">
+
+                    <i class="fa-solid fa-chevron-right"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table class="transactions-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Transaction</th>
+
+                        <th>Customer</th>
+
+                        <th>Amount</th>
+
+                        <th>Method</th>
+
+                        <th>Failure Reason</th>
+
+                        <th>Recovery Score</th>
+
+                        <th>Status</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="transactionTableBody">
+
+
+                    <!-- Transaction 1 -->
+
+                    <tr
+                        data-status="recoverable"
+                        data-failure="network"
+                        data-method="upi"
+                    >
+
+                        <td>
+
+                            <div class="transaction-id">
+                                TXN_0001842
+                            </div>
+
+                            <div class="transaction-time">
+                                2 min ago
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="customer-cell">
+
+                                <div class="customer-avatar">
+                                    RK
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Rahul Kumar
+                                    </strong>
+
+                                    <span>
+                                        CUST_82931
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <strong class="amount">
+                                ₹24,500
+                            </strong>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="method-badge">
+                                UPI
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="failure-reason">
+                                Network Error
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="recovery-score">
+
+                                <div class="score-number">
+                                    87%
+                                </div>
+
+                                <div class="score-bar">
+
+                                    <span
+                                        style="width: 87%"
+                                    ></span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="status-badge recoverable">
+                                RECOVERABLE
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <a
+                                href="/transactions/1"
+                                class="row-action"
+                            >
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+
+                    <!-- Transaction 2 -->
+
+                    <tr
+                        data-status="recoverable"
+                        data-failure="bank"
+                        data-method="card"
+                    >
+
+                        <td>
+
+                            <div class="transaction-id">
+                                TXN_0001839
+                            </div>
+
+                            <div class="transaction-time">
+                                5 min ago
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="customer-cell">
+
+                                <div class="customer-avatar">
+                                    AS
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Ananya Sharma
+                                    </strong>
+
+                                    <span>
+                                        CUST_73182
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <strong class="amount">
+                                ₹12,300
+                            </strong>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="method-badge">
+                                Card
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="failure-reason">
+                                Bank Decline
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="recovery-score">
+
+                                <div class="score-number">
+                                    76%
+                                </div>
+
+                                <div class="score-bar">
+
+                                    <span
+                                        style="width: 76%"
+                                    ></span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="status-badge recoverable">
+                                RECOVERABLE
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <a
+                                href="/transactions/2"
+                                class="row-action"
+                            >
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+
+                    <!-- Transaction 3 -->
+
+                    <tr
+                        data-status="recoverable"
+                        data-failure="funds"
+                        data-method="upi"
+                    >
+
+                        <td>
+
+                            <div class="transaction-id">
+                                TXN_0001832
+                            </div>
+
+                            <div class="transaction-time">
+                                8 min ago
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="customer-cell">
+
+                                <div class="customer-avatar">
+                                    VP
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Vikram Patel
+                                    </strong>
+
+                                    <span>
+                                        CUST_61920
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <strong class="amount">
+                                ₹8,450
+                            </strong>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="method-badge">
+                                UPI
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="failure-reason">
+                                Insufficient Funds
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="recovery-score">
+
+                                <div class="score-number">
+                                    62%
+                                </div>
+
+                                <div class="score-bar">
+
+                                    <span
+                                        style="width: 62%"
+                                    ></span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="status-badge escalate">
+                                ESCALATE
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <a
+                                href="/transactions/3"
+                                class="row-action"
+                            >
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+
+                    <!-- Transaction 4 -->
+
+                    <tr
+                        data-status="recoverable"
+                        data-failure="auth"
+                        data-method="card"
+                    >
+
+                        <td>
+
+                            <div class="transaction-id">
+                                TXN_0001828
+                            </div>
+
+                            <div class="transaction-time">
+                                11 min ago
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="customer-cell">
+
+                                <div class="customer-avatar">
+                                    NS
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Neha Singh
+                                    </strong>
+
+                                    <span>
+                                        CUST_49182
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <strong class="amount">
+                                ₹49,200
+                            </strong>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="method-badge">
+                                Card
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="failure-reason">
+                                Authentication Failed
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="recovery-score">
+
+                                <div class="score-number">
+                                    71%
+                                </div>
+
+                                <div class="score-bar">
+
+                                    <span
+                                        style="width: 71%"
+                                    ></span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="status-badge recoverable">
+                                RECOVERABLE
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <a
+                                href="/transactions/4"
+                                class="row-action"
+                            >
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+
+                    <!-- Transaction 5 -->
+
+                    <tr
+                        data-status="failed"
+                        data-failure="gateway"
+                        data-method="netbanking"
+                    >
+
+                        <td>
+
+                            <div class="transaction-id">
+                                TXN_0001821
+                            </div>
+
+                            <div class="transaction-time">
+                                16 min ago
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="customer-cell">
+
+                                <div class="customer-avatar">
+                                    AM
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Arjun Mehta
+                                    </strong>
+
+                                    <span>
+                                        CUST_38172
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <strong class="amount">
+                                ₹5,780
+                            </strong>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="method-badge">
+                                Net Banking
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="failure-reason">
+                                Gateway Timeout
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="recovery-score low">
+
+                                <div class="score-number">
+                                    28%
+                                </div>
+
+                                <div class="score-bar">
+
+                                    <span
+                                        style="width: 28%"
+                                    ></span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="status-badge stopped">
+                                STOP
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <a
+                                href="/transactions/5"
+                                class="row-action"
+                            >
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+
+                    <!-- Transaction 6 -->
+
+                    <tr
+                        data-status="recovered"
+                        data-failure="network"
+                        data-method="upi"
+                    >
+
+                        <td>
+
+                            <div class="transaction-id">
+                                TXN_0001817
+                            </div>
+
+                            <div class="transaction-time">
+                                21 min ago
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="customer-cell">
+
+                                <div class="customer-avatar">
+                                    PK
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Priya Kapoor
+                                    </strong>
+
+                                    <span>
+                                        CUST_29018
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <strong class="amount">
+                                ₹18,750
+                            </strong>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="method-badge">
+                                UPI
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="failure-reason">
+                                Network Error
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="recovery-score">
+
+                                <div class="score-number">
+                                    91%
+                                </div>
+
+                                <div class="score-bar">
+
+                                    <span
+                                        style="width: 91%"
+                                    ></span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="status-badge recovered">
+                                RECOVERED
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <a
+                                href="/transactions/6"
+                                class="row-action"
+                            >
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+
+                    <!-- Transaction 7 -->
+
+                    <tr
+                        data-status="failed"
+                        data-failure="bank"
+                        data-method="card"
+                    >
+
+                        <td>
+
+                            <div class="transaction-id">
+                                TXN_0001812
+                            </div>
+
+                            <div class="transaction-time">
+                                27 min ago
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="customer-cell">
+
+                                <div class="customer-avatar">
+                                    RS
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Rohan Shah
+                                    </strong>
+
+                                    <span>
+                                        CUST_18492
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <strong class="amount">
+                                ₹7,920
+                            </strong>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="method-badge">
+                                Card
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="failure-reason">
+                                Bank Decline
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="recovery-score">
+
+                                <div class="score-number">
+                                    44%
+                                </div>
+
+                                <div class="score-bar">
+
+                                    <span
+                                        style="width: 44%"
+                                    ></span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="status-badge stopped">
+                                STOP
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <a
+                                href="/transactions/7"
+                                class="row-action"
+                            >
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+
+                    <!-- Transaction 8 -->
+
+                    <tr
+                        data-status="recoverable"
+                        data-failure="network"
+                        data-method="wallet"
+                    >
+
+                        <td>
+
+                            <div class="transaction-id">
+                                TXN_0001806
+                            </div>
+
+                            <div class="transaction-time">
+                                31 min ago
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="customer-cell">
+
+                                <div class="customer-avatar">
+                                    SK
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Sneha Kapoor
+                                    </strong>
+
+                                    <span>
+                                        CUST_10923
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <strong class="amount">
+                                ₹31,600
+                            </strong>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="method-badge">
+                                Wallet
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="failure-reason">
+                                Network Error
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="recovery-score">
+
+                                <div class="score-number">
+                                    83%
+                                </div>
+
+                                <div class="score-bar">
+
+                                    <span
+                                        style="width: 83%"
+                                    ></span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="status-badge recoverable">
+                                RECOVERABLE
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <a
+                                href="/transactions/8"
+                                class="row-action"
+                            >
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- Empty state -->
+
+        <div
+            id="emptyTransactions"
+            class="empty-state"
+            style="display:none;"
+        >
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <h3>
+                No transactions found
+            </h3>
+
+            <p>
+                Try changing your filters or search query.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script
+    src="{{ url_for('static', filename='js/transactions.js') }}"
+></script>
+
+{% endblock %}

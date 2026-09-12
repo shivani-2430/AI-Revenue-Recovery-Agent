@@ -1,0 +1,424 @@
+/* =========================================================
+   CUSTOMERS
+   ========================================================= */
+
+.page-container {
+    width: 100%;
+}
+
+
+/* =========================================================
+   PAGE HEADER
+   ========================================================= */
+
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    margin: 0 0 6px;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.page-header p {
+    margin: 0;
+    color: #777;
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   SUMMARY CARDS
+   ========================================================= */
+
+.customer-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.summary-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.summary-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #f3f4f6;
+    font-size: 18px;
+}
+
+.summary-label {
+    display: block;
+    margin-bottom: 5px;
+    color: #777;
+    font-size: 12px;
+}
+
+.summary-card strong {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   CONTROLS
+   ========================================================= */
+
+.customer-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.customer-search {
+    position: relative;
+    width: min(420px, 100%);
+}
+
+.customer-search i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+}
+
+.customer-search input {
+    width: 100%;
+    height: 42px;
+    padding: 0 14px 0 40px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+    background: #fff;
+}
+
+.customer-search input:focus {
+    border-color: #888;
+}
+
+.clear-search {
+    height: 42px;
+    padding: 0 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.clear-search:hover {
+    background: #f5f5f5;
+}
+
+
+/* =========================================================
+   TABLE CARD
+   ========================================================= */
+
+.table-card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 22px;
+    border-bottom: 1px solid #eee;
+}
+
+.table-header h2 {
+    margin: 0 0 5px;
+    font-size: 17px;
+}
+
+.table-header span {
+    color: #888;
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.customers-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 950px;
+}
+
+.customers-table th {
+    padding: 14px 18px;
+    text-align: left;
+    white-space: nowrap;
+    background: #fafafa;
+    border-bottom: 1px solid #eee;
+    color: #777;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.customers-table td {
+    padding: 16px 18px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+    font-size: 13px;
+}
+
+.customers-table tbody tr:hover {
+    background: #fafafa;
+}
+
+.customers-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* =========================================================
+   CUSTOMER CELL
+   ========================================================= */
+
+.customer-cell {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 180px;
+}
+
+.customer-avatar {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #f0f0f0;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.customer-info strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.customer-info span {
+    display: block;
+    color: #888;
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   SEGMENT
+   ========================================================= */
+
+.segment-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 6px;
+    background: #f3f4f6;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   PAYMENT COUNTS
+   ========================================================= */
+
+.payment-success {
+    font-weight: 600;
+}
+
+.payment-failed {
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   SUCCESS RATE
+   ========================================================= */
+
+.success-rate {
+    min-width: 100px;
+}
+
+.success-rate-value {
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.success-rate-bar {
+    width: 80px;
+    height: 5px;
+    overflow: hidden;
+    border-radius: 5px;
+    background: #eee;
+}
+
+.success-rate-bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+}
+
+
+/* =========================================================
+   CUSTOMER VALUE
+   ========================================================= */
+
+.customer-value {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.loading-cell {
+    height: 180px;
+    text-align: center !important;
+    color: #888;
+}
+
+.loading-cell i {
+    margin-right: 8px;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.empty-state {
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.empty-state i {
+    margin-bottom: 15px;
+    color: #aaa;
+    font-size: 28px;
+}
+
+.empty-state h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+}
+
+.empty-state p {
+    margin: 0;
+    color: #888;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   PAGINATION
+   ========================================================= */
+
+.customer-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 16px 20px;
+    border-top: 1px solid #eee;
+}
+
+.pagination-button {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.pagination-button:hover:not(:disabled) {
+    background: #f5f5f5;
+}
+
+.pagination-button.active {
+    font-weight: 700;
+}
+
+.pagination-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+    .customer-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 650px) {
+
+    .customer-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .customer-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .customer-search {
+        width: 100%;
+    }
+
+    .clear-search {
+        width: 100%;
+    }
+
+    .page-header h1 {
+        font-size: 23px;
+    }
+}

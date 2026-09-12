@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+
+{% block title %}
+RecoverAI | Transaction Intelligence
+{% endblock %}
+
+
+{% block extra_css %}
+
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/transaction-details.css') }}"
+>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div
+    class="transaction-intelligence"
+    id="transactionPage"
+    data-transaction-id="{{ transaction_id }}"
+>
+
+
+    <!-- =====================================================
+         LOADING
+    ====================================================== -->
+
+    <div
+        id="transactionLoading"
+        class="transaction-loading"
+    >
+
+        <div class="loading-spinner"></div>
+
+        <span>
+            Loading transaction intelligence...
+        </span>
+
+    </div>
+
+
+    <!-- =====================================================
+         ERROR
+    ====================================================== -->
+
+    <div
+        id="transactionError"
+        class="transaction-error"
+        style="display:none;"
+    >
+
+        <i class="fa-solid fa-circle-exclamation"></i>
+
+        <h2>
+            Transaction unavailable
+        </h2>
+
+        <p>
+            The transaction intelligence could not be loaded.
+        </p>
+
+        <a href="/transactions">
+            Back to Transactions
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         ACTUAL CONTENT
+    ====================================================== -->
+
+    <div
+        id="transactionContent"
+        style="display:none;"
+    >
+
+
+        <!-- HEADER -->
+
+        <div class="transaction-page-header">
+
+            <div>
+
+                <a
+                    href="/transactions"
+                    class="back-link"
+                >
+
+                    <i class="fa-solid fa-arrow-left"></i>
+
+                    Back to Transactions
+
+                </a>
+
+
+                <div class="transaction-title-row">
+
+                    <h1 id="transactionId"></h1>
+
+                    <span
+                        id="transactionStatus"
+                        class="main-status"
+                    ></span>
+
+                </div>
+
+
+                <p class="transaction-subtitle">
+                    Transaction intelligence and recovery journey
+                </p>
+
+            </div>
+
+
+            <div class="transaction-header-right">
+
+                <div class="transaction-dates">
+
+                    <span id="createdAt"></span>
+
+                    <span id="recoveredAt"></span>
+
+                </div>
+
+
+                <div class="header-actions">
+
+                    <button
+                        class="outline-action"
+                        id="shareButton"
+                    >
+
+                        <i class="fa-solid fa-share-nodes"></i>
+
+                        Share
+
+                    </button>
+
+
+                    <button
+                        class="outline-action"
+                        id="downloadButton"
+                    >
+
+                        <i class="fa-solid fa-download"></i>
+
+                        Download
+
+                    </button>
+
+
+                    <button
+                        class="primary-action"
+                        id="actionButton"
+                    >
+
+                        Take Action
+
+                        <i class="fa-solid fa-chevron-down"></i>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             SUMMARY
+        ================================================== -->
+
+        <div
+            class="transaction-summary card"
+            id="transactionSummary"
+        >
+
+            <!-- JavaScript renders this -->
+
+        </div>
+
+
+        <!-- =================================================
+             MAIN INTELLIGENCE GRID
+        ================================================== -->
+
+        <div class="intelligence-grid">
+
+
+            <!-- TIMELINE -->
+
+            <section
+                class="detail-card timeline-card"
+            >
+
+                <div class="detail-card-header">
+
+                    <div>
+
+                        <h2>
+                            Payment & Recovery Timeline
+                        </h2>
+
+                        <p>
+                            End-to-end transaction journey
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="timeline"
+                    id="timeline"
+                >
+
+                </div>
+
+            </section>
+
+
+            <!-- AI DECISION -->
+
+            <section
+                class="detail-card ai-decision-card"
+            >
+
+                <div class="detail-card-header">
+
+                    <div>
+
+                        <h2>
+                            AI Recovery Decision
+                        </h2>
+
+                    </div>
+
+                    <span
+                        class="model-badge"
+                        id="modelBadge"
+                    ></span>
+
+                </div>
+
+
+                <div
+                    class="ai-recommendation"
+                    id="aiRecommendation"
+                >
+
+                </div>
+
+
+                <p
+                    class="decision-explanation"
+                    id="decisionExplanation"
+                ></p>
+
+
+                <div
+                    class="decision-metrics"
+                    id="decisionMetrics"
+                >
+
+                </div>
+
+
+                <div class="why-action">
+
+                    <h3>
+                        Why this action?
+                    </h3>
+
+                    <div
+                        id="decisionReasons"
+                    ></div>
+
+                </div>
+
+
+                <div
+                    class="execute-decision"
+                    id="executeDecision"
+                >
+
+                </div>
+
+            </section>
+
+
+            <!-- OUTCOME -->
+
+            <section
+                class="detail-card outcome-card"
+            >
+
+                <div class="detail-card-header">
+
+                    <h2>
+                        Recovery Outcome
+                    </h2>
+
+                </div>
+
+
+                <div
+                    id="recoveryOutcome"
+                >
+
+                </div>
+
+            </section>
+
+        </div>
+
+
+        <!-- =================================================
+             BOTTOM DETAILS
+        ================================================== -->
+
+        <div class="bottom-details-grid">
+
+
+            <!-- TECHNICAL -->
+
+            <section class="detail-card">
+
+                <div class="detail-card-header">
+
+                    <h2>
+                        Technical Details
+                    </h2>
+
+                </div>
+
+
+                <div
+                    class="technical-grid"
+                    id="technicalDetails"
+                >
+
+                </div>
+
+            </section>
+
+
+            <!-- AUDIT -->
+
+            <section class="detail-card">
+
+                <div class="detail-card-header">
+
+                    <h2>
+                        Audit & Model Information
+                    </h2>
+
+                </div>
+
+
+                <div
+                    class="technical-grid audit-grid"
+                    id="auditDetails"
+                >
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script
+    src="{{ url_for('static', filename='js/transaction-details.js') }}"
+></script>
+
+{% endblock %}

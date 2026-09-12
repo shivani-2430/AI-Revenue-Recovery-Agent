@@ -1,0 +1,513 @@
+{% extends "base.html" %}
+
+{% block title %}Recovery Queue | RecoverAI{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/recovery-queue.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+
+<div
+    class="recovery-page"
+    id="recoveryQueuePage"
+>
+
+    <!-- HEADER -->
+    <section class="recovery-header">
+
+        <div>
+            <span class="eyebrow">
+                RECOVERY OPERATIONS
+            </span>
+
+            <h1>
+                Recovery Queue
+            </h1>
+
+            <p>
+                Prioritized revenue opportunities identified by RecoverAI.
+            </p>
+        </div>
+
+        <div class="header-actions">
+
+            <button
+                class="icon-button"
+                id="refreshQueue"
+                title="Refresh recovery queue"
+            >
+                <i class="fa-solid fa-rotate"></i>
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- RECOVERY POTENTIAL -->
+    <section class="potential-card">
+
+        <div class="potential-content">
+
+            <div class="potential-icon">
+                <i class="fa-solid fa-bolt"></i>
+            </div>
+
+            <div>
+                <span>
+                    RECOVERY POTENTIAL
+                </span>
+
+                <strong id="recoveryPotential">
+                    --
+                </strong>
+
+                <small>
+                    of identified revenue at risk
+                </small>
+            </div>
+
+        </div>
+
+        <div class="potential-description">
+            <span>
+                AI Opportunity Signal
+            </span>
+
+            <p id="aiFocus">
+                Analyzing recovery opportunities...
+            </p>
+        </div>
+
+    </section>
+
+
+    <!-- KPI CARDS -->
+    <section class="queue-kpis">
+
+        <article class="kpi-card">
+
+            <div class="kpi-icon indigo">
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
+
+            <div>
+                <span>
+                    Eligible Opportunities
+                </span>
+
+                <strong id="eligibleOpportunities">
+                    --
+                </strong>
+
+                <small>
+                    currently recoverable
+                </small>
+            </div>
+
+        </article>
+
+
+        <article class="kpi-card">
+
+            <div class="kpi-icon indigo">
+                <i class="fa-solid fa-indian-rupee-sign"></i>
+            </div>
+
+            <div>
+                <span>
+                    Revenue at Risk
+                </span>
+
+                <strong id="revenueAtRisk">
+                    --
+                </strong>
+
+                <small>
+                    requiring attention
+                </small>
+            </div>
+
+        </article>
+
+
+        <article class="kpi-card">
+
+            <div class="kpi-icon green">
+                <i class="fa-solid fa-arrow-trend-up"></i>
+            </div>
+
+            <div>
+                <span>
+                    Expected Recovery
+                </span>
+
+                <strong id="expectedRecovery">
+                    --
+                </strong>
+
+                <small>
+                    based on recovery probability
+                </small>
+            </div>
+
+        </article>
+
+
+        <article class="kpi-card">
+
+            <div class="kpi-icon indigo">
+                <i class="fa-solid fa-bolt"></i>
+            </div>
+
+            <div>
+                <span>
+                    High Priority
+                </span>
+
+                <strong id="highPriority">
+                    --
+                </strong>
+
+                <small>
+                    highest-value opportunities
+                </small>
+            </div>
+
+        </article>
+
+    </section>
+
+
+    <!-- CONTROLS -->
+    <section class="queue-controls">
+
+        <div class="queue-tabs">
+
+            <button
+                class="queue-tab active"
+                data-priority=""
+            >
+                All Opportunities
+                <span id="allCount">0</span>
+            </button>
+
+            <button
+                class="queue-tab"
+                data-priority="HIGH"
+            >
+                High Priority
+                <span id="highCount">0</span>
+            </button>
+
+            <button
+                class="queue-tab"
+                data-priority="MEDIUM"
+            >
+                Medium
+                <span id="mediumCount">0</span>
+            </button>
+
+            <button
+                class="queue-tab"
+                data-priority="LOW"
+            >
+                Low
+                <span id="lowCount">0</span>
+            </button>
+
+        </div>
+
+
+        <div class="queue-tools">
+
+            <div class="search-box">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input
+                    type="text"
+                    id="queueSearch"
+                    placeholder="Search transaction, customer or failure..."
+                >
+
+            </div>
+
+
+            <select id="statusFilter">
+                <option value="">
+                    All Status
+                </option>
+
+                <option value="READY">
+                    Ready
+                </option>
+
+                <option value="PENDING">
+                    Pending
+                </option>
+
+                <option value="STOPPED">
+                    Stopped
+                </option>
+            </select>
+
+
+            <select id="failureFilter">
+                <option value="">
+                    All Failure Reasons
+                </option>
+            </select>
+
+
+            <button
+                class="filter-button"
+                id="clearFilters"
+            >
+                <i class="fa-solid fa-filter-circle-xmark"></i>
+                Clear
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- MAIN GRID -->
+    <section class="queue-layout">
+
+        <!-- OPPORTUNITY TABLE -->
+        <div class="opportunity-panel">
+
+            <div class="panel-header">
+
+                <div>
+                    <h2>
+                        Recovery Opportunities
+                    </h2>
+
+                    <p>
+                        Transactions that RecoverAI can potentially recover.
+                    </p>
+                </div>
+
+                <select id="sortSelect">
+                    <option value="opportunity">
+                        AI Priority
+                    </option>
+
+                    <option value="probability">
+                        Recovery Probability
+                    </option>
+
+                    <option value="amount">
+                        Amount at Risk
+                    </option>
+                </select>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table class="recovery-table">
+
+                    <thead>
+                        <tr>
+                            <th>Priority</th>
+                            <th>Transaction</th>
+                            <th>Customer</th>
+                            <th>Amount</th>
+                            <th>Failure</th>
+                            <th>Recovery</th>
+                            <th>AI Action</th>
+                            <th>Guardrail</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="opportunityTable">
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <div
+                class="table-empty"
+                id="tableEmpty"
+                hidden
+            >
+                <i class="fa-solid fa-inbox"></i>
+
+                <h3>
+                    No recovery opportunities
+                </h3>
+
+                <p>
+                    No opportunities match the current filters.
+                </p>
+            </div>
+
+
+            <div class="pagination">
+
+                <span id="paginationInfo">
+                    --
+                </span>
+
+                <div class="pagination-buttons">
+
+                    <button
+                        id="previousPage"
+                        class="page-button"
+                    >
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+
+                    <span id="currentPage">
+                        1
+                    </span>
+
+                    <button
+                        id="nextPage"
+                        class="page-button"
+                    >
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- INTELLIGENCE RAIL -->
+        <aside class="intelligence-rail">
+
+            <!-- FAILURE DRIVERS -->
+            <div class="rail-card">
+
+                <div class="rail-heading">
+                    <div>
+                        <i class="fa-solid fa-chart-simple"></i>
+
+                        <h3>
+                            Top Recovery Drivers
+                        </h3>
+                    </div>
+                </div>
+
+                <div id="failureDrivers">
+                </div>
+
+            </div>
+
+
+            <!-- PAYMENT METHODS -->
+            <div class="rail-card">
+
+                <div class="rail-heading">
+                    <div>
+                        <i class="fa-solid fa-chart-pie"></i>
+
+                        <h3>
+                            Payment Methods
+                        </h3>
+                    </div>
+                </div>
+
+                <div id="paymentMethods">
+                </div>
+
+            </div>
+
+
+            <!-- AI STRATEGY -->
+            <div class="ai-strategy-card">
+
+                <div class="strategy-header">
+
+                    <div class="strategy-icon">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+
+                    <div>
+                        <span>
+                            AI STRATEGY
+                        </span>
+
+                        <h3>
+                            Recovery Focus
+                        </h3>
+                    </div>
+
+                </div>
+
+
+                <p id="strategyFocus">
+                    Generating recovery strategy...
+                </p>
+
+
+                <div class="strategy-stat">
+
+                    <span>
+                        Priority Opportunities
+                    </span>
+
+                    <strong id="strategyOpportunityCount">
+                        --
+                    </strong>
+
+                </div>
+
+
+                <div class="strategy-stat">
+
+                    <span>
+                        Expected Recovery
+                    </span>
+
+                    <strong id="strategyRecovery">
+                        --
+                    </strong>
+
+                </div>
+
+
+                <button
+                    class="strategy-button"
+                    id="runRecovery"
+                >
+                    <i class="fa-solid fa-play"></i>
+                    Review Recovery Plan
+                </button>
+
+                <small>
+                    Actions remain subject to policy and guardrail validation.
+                </small>
+
+            </div>
+
+        </aside>
+
+    </section>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script
+    src="{{ url_for('static', filename='js/recovery-queue.js') }}"
+></script>
+{% endblock %}

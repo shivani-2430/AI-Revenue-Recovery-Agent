@@ -1,0 +1,703 @@
+{% extends "base.html" %}
+
+
+{% block extra_css %}
+
+<link
+	rel="stylesheet"
+	href="{{ url_for(
+		'static',
+		filename='css/policies.css'
+	) }}"
+>
+
+{% endblock %}
+
+
+{% block content %}
+
+<main class="policies-page">
+
+	<!-- =====================================================
+	     HEADER
+	====================================================== -->
+
+	<section class="policies-header">
+
+		<div>
+
+			<div class="policies-eyebrow">
+				GOVERNANCE
+			</div>
+
+			<h1>
+				Recovery Policies
+			</h1>
+
+			<p>
+				Configure the rules and guardrails that control
+				RecoverAI recovery decisions.
+			</p>
+
+		</div>
+
+
+		<div class="policy-status">
+
+			<span></span>
+
+			POLICY ENGINE ACTIVE
+
+		</div>
+
+	</section>
+
+
+	<!-- =====================================================
+	     ACTION BAR
+	====================================================== -->
+
+	<section class="policy-action-bar">
+
+		<div>
+
+			<div class="action-title">
+				Active Recovery Policy
+			</div>
+
+			<div class="action-description">
+				Changes apply to the recovery decision pipeline.
+			</div>
+
+		</div>
+
+
+		<div class="action-buttons">
+
+			<button
+				type="button"
+				id="resetPolicies"
+				class="secondary-button"
+			>
+
+				<i class="fa-solid fa-rotate-left"></i>
+
+				Reset Defaults
+
+			</button>
+
+
+			<button
+				type="button"
+				id="savePolicies"
+				class="primary-button"
+			>
+
+				<i class="fa-solid fa-floppy-disk"></i>
+
+				Save Policies
+
+			</button>
+
+		</div>
+
+	</section>
+
+
+	<!-- =====================================================
+	     DECISION THRESHOLDS
+	====================================================== -->
+
+	<section class="policy-section">
+
+		<div class="section-heading">
+
+			<div>
+
+				<h2>
+					Decision Thresholds
+				</h2>
+
+				<p>
+					Define when RecoverAI can recommend automated
+					recovery actions.
+				</p>
+
+			</div>
+
+		</div>
+
+
+		<div class="policy-grid">
+
+
+			<!-- MINIMUM RECOVERY PROBABILITY -->
+
+			<div class="policy-card">
+
+				<div class="policy-card-icon indigo">
+					<i class="fa-solid fa-chart-line"></i>
+				</div>
+
+				<div class="policy-card-content">
+
+					<label
+						for="minimumRecoveryProbability"
+					>
+						Minimum Recovery Probability
+					</label>
+
+					<p>
+						Minimum ML probability required for a
+						recovery opportunity.
+					</p>
+
+					<div class="range-control">
+
+						<input
+							type="range"
+							id="minimumRecoveryProbability"
+							min="0"
+							max="100"
+							step="1"
+						>
+
+						<strong
+							id="minimumRecoveryProbabilityValue"
+						>
+							40%
+						</strong>
+
+					</div>
+
+				</div>
+
+			</div>
+
+
+			<!-- ESCALATION THRESHOLD -->
+
+			<div class="policy-card">
+
+				<div class="policy-card-icon navy">
+					<i class="fa-solid fa-user-shield"></i>
+				</div>
+
+				<div class="policy-card-content">
+
+					<label
+						for="escalationThreshold"
+					>
+						Escalation Threshold
+					</label>
+
+					<p>
+						Recovery probability above this level can
+						trigger higher-priority review.
+					</p>
+
+					<div class="range-control">
+
+						<input
+							type="range"
+							id="escalationThreshold"
+							min="0"
+							max="100"
+							step="1"
+						>
+
+						<strong
+							id="escalationThresholdValue"
+						>
+							70%
+						</strong>
+
+					</div>
+
+				</div>
+
+			</div>
+
+
+			<!-- HIGH VALUE THRESHOLD -->
+
+			<div class="policy-card">
+
+				<div class="policy-card-icon green">
+					<i class="fa-solid fa-indian-rupee-sign"></i>
+				</div>
+
+				<div class="policy-card-content">
+
+					<label
+						for="highValueThreshold"
+					>
+						High-Value Threshold
+					</label>
+
+					<p>
+						Transactions above this amount require
+						additional review.
+					</p>
+
+					<div class="amount-input">
+
+						<span>₹</span>
+
+						<input
+							type="number"
+							id="highValueThreshold"
+							min="0"
+							step="1000"
+						>
+
+					</div>
+
+				</div>
+
+			</div>
+
+
+			<!-- AUTO RETRY AMOUNT -->
+
+			<div class="policy-card">
+
+				<div class="policy-card-icon green">
+					<i class="fa-solid fa-rotate"></i>
+				</div>
+
+				<div class="policy-card-content">
+
+					<label
+						for="maximumAutoRetryAmount"
+					>
+						Maximum Auto-Retry Amount
+					</label>
+
+					<p>
+						Maximum transaction value eligible for
+						automatic retry.
+					</p>
+
+					<div class="amount-input">
+
+						<span>₹</span>
+
+						<input
+							type="number"
+							id="maximumAutoRetryAmount"
+							min="0"
+							step="1000"
+						>
+
+					</div>
+
+				</div>
+
+			</div>
+
+		</div>
+
+	</section>
+
+
+	<!-- =====================================================
+	     RETRY CONTROLS
+	====================================================== -->
+
+	<section class="policy-section">
+
+		<div class="section-heading">
+
+			<div>
+
+				<h2>
+					Retry Controls
+				</h2>
+
+				<p>
+					Control how frequently and how many times a
+					failed payment can be retried.
+				</p>
+
+			</div>
+
+		</div>
+
+
+		<div class="policy-grid retry-grid">
+
+
+			<!-- MAX RETRIES -->
+
+			<div class="policy-card">
+
+				<div class="policy-card-icon indigo">
+					<i class="fa-solid fa-arrow-rotate-right"></i>
+				</div>
+
+				<div class="policy-card-content">
+
+					<label
+						for="maximumRetryCount"
+					>
+						Maximum Retry Count
+					</label>
+
+					<p>
+						Maximum number of automated recovery attempts
+						per transaction.
+					</p>
+
+					<div class="number-control">
+
+						<input
+							type="number"
+							id="maximumRetryCount"
+							min="0"
+							max="10"
+							step="1"
+						>
+
+						<span>
+							attempts
+						</span>
+
+					</div>
+
+				</div>
+
+			</div>
+
+
+			<!-- COOLDOWN -->
+
+			<div class="policy-card">
+
+				<div class="policy-card-icon navy">
+					<i class="fa-regular fa-clock"></i>
+				</div>
+
+				<div class="policy-card-content">
+
+					<label
+						for="retryCooldown"
+					>
+						Retry Cooldown
+					</label>
+
+					<p>
+						Minimum time between automated retry attempts.
+					</p>
+
+					<div class="number-control">
+
+						<input
+							type="number"
+							id="retryCooldown"
+							min="0"
+							max="1440"
+							step="5"
+						>
+
+						<span>
+							minutes
+						</span>
+
+					</div>
+
+				</div>
+
+			</div>
+
+		</div>
+
+	</section>
+
+
+	<!-- =====================================================
+	     PAYMENT METHODS
+	====================================================== -->
+
+	<section class="policy-section">
+
+		<div class="section-heading">
+
+			<div>
+
+				<h2>
+					Payment Method Controls
+				</h2>
+
+				<p>
+					Choose which payment methods can participate
+					in automated recovery.
+				</p>
+
+			</div>
+
+		</div>
+
+
+		<div class="payment-method-card">
+
+			<label class="method-option">
+
+				<input
+					type="checkbox"
+					value="UPI"
+					class="payment-method"
+				>
+
+				<span class="checkmark"></span>
+
+				<span class="method-content">
+
+					<strong>
+						UPI
+					</strong>
+
+					<small>
+						Unified Payments Interface
+					</small>
+
+				</span>
+
+			</label>
+
+
+			<label class="method-option">
+
+				<input
+					type="checkbox"
+					value="CARD"
+					class="payment-method"
+				>
+
+				<span class="checkmark"></span>
+
+				<span class="method-content">
+
+					<strong>
+						Cards
+					</strong>
+
+					<small>
+						Credit and debit cards
+					</small>
+
+				</span>
+
+			</label>
+
+
+			<label class="method-option">
+
+				<input
+					type="checkbox"
+					value="NETBANKING"
+					class="payment-method"
+				>
+
+				<span class="checkmark"></span>
+
+				<span class="method-content">
+
+					<strong>
+						Netbanking
+					</strong>
+
+					<small>
+						Online bank payments
+					</small>
+
+				</span>
+
+			</label>
+
+
+			<label class="method-option">
+
+				<input
+					type="checkbox"
+					value="WALLET"
+					class="payment-method"
+				>
+
+				<span class="checkmark"></span>
+
+				<span class="method-content">
+
+					<strong>
+						Wallets
+					</strong>
+
+					<small>
+						Digital wallet payments
+					</small>
+
+				</span>
+
+			</label>
+
+		</div>
+
+	</section>
+
+
+	<!-- =====================================================
+	     STOP RULES
+	====================================================== -->
+
+	<section class="policy-section">
+
+		<div class="section-heading">
+
+			<div>
+
+				<h2>
+					Stop Rules
+				</h2>
+
+				<p>
+					Conditions that immediately stop automated
+					recovery actions.
+				</p>
+
+			</div>
+
+		</div>
+
+
+		<div class="stop-rules-card">
+
+
+			<label class="toggle-row">
+
+				<div>
+
+					<strong>
+						Stop after successful recovery
+					</strong>
+
+					<span>
+						Prevent additional recovery attempts after
+						a successful payment.
+					</span>
+
+				</div>
+
+				<input
+					type="checkbox"
+					id="stopAfterSuccess"
+				>
+
+				<span class="toggle"></span>
+
+			</label>
+
+
+			<label class="toggle-row">
+
+				<div>
+
+					<strong>
+						Stop after maximum retries
+					</strong>
+
+					<span>
+						Block further automated attempts once the
+						retry limit is reached.
+					</span>
+
+				</div>
+
+				<input
+					type="checkbox"
+					id="stopAfterMaxRetries"
+				>
+
+				<span class="toggle"></span>
+
+			</label>
+
+
+			<label class="toggle-row">
+
+				<div>
+
+					<strong>
+						Stop for low recovery probability
+					</strong>
+
+					<span>
+						Prevent automated recovery when ML confidence
+						falls below the configured threshold.
+					</span>
+
+				</div>
+
+				<input
+					type="checkbox"
+					id="stopForLowProbability"
+				>
+
+				<span class="toggle"></span>
+
+			</label>
+
+
+			<label class="toggle-row">
+
+				<div>
+
+					<strong>
+						Stop high-value transactions without review
+					</strong>
+
+					<span>
+						Require additional review for high-value
+						recovery opportunities.
+					</span>
+
+				</div>
+
+				<input
+					type="checkbox"
+					id="stopForHighValue"
+				>
+
+				<span class="toggle"></span>
+
+			</label>
+
+		</div>
+
+	</section>
+
+
+	<!-- =====================================================
+	     SAVE STATUS
+	====================================================== -->
+
+	<div
+		id="policyMessage"
+		class="policy-message"
+		hidden
+	></div>
+
+</main>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script
+	src="{{ url_for(
+		'static',
+		filename='js/policies.js'
+	) }}"
+></script>
+
+{% endblock %}

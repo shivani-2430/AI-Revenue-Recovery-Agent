@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card">
+
+    <h2>{{ project.project_name }}</h2>
+
+    <br>
+
+    <p><strong>Organization:</strong> {{ project.organization }}</p>
+
+    <p><strong>Domain:</strong> {{ project.domain }}</p>
+
+    <p><strong>Technology Stack:</strong> {{ project.tech_stack }}</p>
+
+    <p><strong>Budget:</strong> ₹{{ project.budget }}</p>
+
+    <p><strong>Timeline:</strong> {{ project.timeline }} Months</p>
+
+    <p><strong>Team Size:</strong> {{ project.team_size }}</p>
+
+    <br>
+
+    <p><strong>Description:</strong></p>
+
+    <p>{{ project.description }}</p>
+
+    <br><br>
+
+    <a href="/decision-simulator">
+        <button class="primary-btn">
+            ← Back to AI Decision Simulator
+        </button>
+    </a>
+
+</div>
+
+{% endblock %}

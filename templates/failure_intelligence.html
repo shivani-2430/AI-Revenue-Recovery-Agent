@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link
+	rel="stylesheet"
+	href="{{ url_for(
+		'static',
+		filename='css/failure-intelligence.css'
+	) }}"
+>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="failure-intelligence-page">
+
+	<!-- =====================================================
+	     HEADER
+	     ===================================================== -->
+
+	<div class="page-header">
+
+		<div>
+
+			<div class="eyebrow">
+				FAILURE INTELLIGENCE
+			</div>
+
+			<h1>
+				Failure Intelligence
+			</h1>
+
+			<p>
+				Understand why payments fail, where revenue is leaking,
+				and which failure patterns are most recoverable.
+			</p>
+
+		</div>
+
+		<button
+			id="refreshFailureIntelligence"
+			class="refresh-button"
+		>
+			<i class="fa-solid fa-rotate"></i>
+			Refresh
+		</button>
+
+	</div>
+
+
+	<!-- =====================================================
+	     SUMMARY
+	     ===================================================== -->
+
+	<div class="failure-summary-grid">
+
+		<div class="failure-summary-card">
+
+			<div class="summary-icon indigo">
+				<i class="fa-solid fa-triangle-exclamation"></i>
+			</div>
+
+			<div>
+
+				<span>
+					Failed Transactions
+				</span>
+
+				<strong id="failedTransactions">
+					--
+				</strong>
+
+				<small>
+					failed payment events
+				</small>
+
+			</div>
+
+		</div>
+
+
+		<div class="failure-summary-card">
+
+			<div class="summary-icon red">
+				<i class="fa-solid fa-arrow-trend-down"></i>
+			</div>
+
+			<div>
+
+				<span>
+					Revenue Lost
+				</span>
+
+				<strong id="revenueLost">
+					--
+				</strong>
+
+				<small>
+					failed payment value
+				</small>
+
+			</div>
+
+		</div>
+
+
+		<div class="failure-summary-card">
+
+			<div class="summary-icon indigo">
+				<i class="fa-solid fa-shield-halved"></i>
+			</div>
+
+			<div>
+
+				<span>
+					Revenue at Risk
+				</span>
+
+				<strong id="revenueAtRisk">
+					--
+				</strong>
+
+				<small>
+					recoverable exposure
+				</small>
+
+			</div>
+
+		</div>
+
+
+		<div class="failure-summary-card">
+
+			<div class="summary-icon green">
+				<i class="fa-solid fa-bullseye"></i>
+			</div>
+
+			<div>
+
+				<span>
+					Recoverability
+				</span>
+
+				<strong id="recoverability">
+					--
+				</strong>
+
+				<small>
+					average recovery probability
+				</small>
+
+			</div>
+
+		</div>
+
+	</div>
+
+
+	<!-- =====================================================
+	     MAIN ANALYTICS
+	     ===================================================== -->
+
+	<div class="intelligence-grid">
+
+
+		<!-- FAILURE TREND -->
+
+		<section class="intelligence-card trend-card">
+
+			<div class="card-header">
+
+				<div>
+
+					<h2>
+						Failure Trend
+					</h2>
+
+					<p>
+						Failed payment volume and revenue exposure over time.
+					</p>
+
+				</div>
+
+				<div class="card-label">
+					LIVE DATA
+				</div>
+
+			</div>
+
+			<div
+				id="failureTrend"
+				class="trend-chart"
+			>
+
+				<div class="chart-loading">
+					<i class="fa-solid fa-circle-notch fa-spin"></i>
+					Loading failure trend...
+				</div>
+
+			</div>
+
+		</section>
+
+
+		<!-- FAILURE REASONS -->
+
+		<section class="intelligence-card">
+
+			<div class="card-header">
+
+				<div>
+
+					<h2>
+						Failure Reasons
+					</h2>
+
+					<p>
+						Where failed payments are originating.
+					</p>
+
+				</div>
+
+			</div>
+
+			<div
+				id="failureReasons"
+				class="failure-reasons"
+			>
+
+				<div class="chart-loading">
+					<i class="fa-solid fa-circle-notch fa-spin"></i>
+					Loading failure reasons...
+				</div>
+
+			</div>
+
+		</section>
+
+
+	</div>
+
+
+	<!-- =====================================================
+	     REVENUE IMPACT
+	     ===================================================== -->
+
+	<section class="intelligence-card revenue-impact-card">
+
+		<div class="card-header">
+
+			<div>
+
+				<h2>
+					Revenue Impact by Failure Type
+				</h2>
+
+				<p>
+					Compare failure volume, revenue exposure and recoverability.
+				</p>
+
+			</div>
+
+		</div>
+
+		<div
+			id="revenueImpact"
+			class="revenue-impact"
+		>
+
+			<div class="chart-loading">
+				<i class="fa-solid fa-circle-notch fa-spin"></i>
+				Loading revenue impact...
+			</div>
+
+		</div>
+
+	</section>
+
+
+	<!-- =====================================================
+	     LOWER GRID
+	     ===================================================== -->
+
+	<div class="intelligence-grid lower-grid">
+
+
+		<!-- PAYMENT METHODS -->
+
+		<section class="intelligence-card">
+
+			<div class="card-header">
+
+				<div>
+
+					<h2>
+						Payment Method Intelligence
+					</h2>
+
+					<p>
+						Failure exposure across payment methods.
+					</p>
+
+				</div>
+
+			</div>
+
+			<div
+				id="paymentMethods"
+				class="payment-methods"
+			>
+
+				<div class="chart-loading">
+					<i class="fa-solid fa-circle-notch fa-spin"></i>
+					Loading payment methods...
+				</div>
+
+			</div>
+
+		</section>
+
+
+		<!-- HIGH RISK PATTERNS -->
+
+		<section class="intelligence-card">
+
+			<div class="card-header">
+
+				<div>
+
+					<h2>
+						High-Value Failure Patterns
+					</h2>
+
+					<p>
+						Failure combinations with the strongest recovery opportunity.
+					</p>
+
+				</div>
+
+			</div>
+
+			<div
+				id="highRiskPatterns"
+				class="risk-patterns"
+			>
+
+				<div class="chart-loading">
+					<i class="fa-solid fa-circle-notch fa-spin"></i>
+					Loading patterns...
+				</div>
+
+			</div>
+
+		</section>
+
+
+	</div>
+
+
+	<!-- =====================================================
+	     AI INSIGHT
+	     ===================================================== -->
+
+	<section
+		id="failureInsight"
+		class="ai-insight-card"
+	>
+
+		<div class="ai-insight-icon">
+
+			<i class="fa-solid fa-wand-magic-sparkles"></i>
+
+		</div>
+
+		<div class="ai-insight-content">
+
+			<div class="ai-insight-label">
+				RECOVERAI INSIGHT
+			</div>
+
+			<h2 id="insightTitle">
+				Analyzing failure patterns...
+			</h2>
+
+			<p id="insightDescription">
+				Failure intelligence is being calculated from payment events.
+			</p>
+
+		</div>
+
+		<div
+			id="insightSeverity"
+			class="insight-severity"
+		>
+			--
+		</div>
+
+	</section>
+
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script
+	src="{{ url_for(
+		'static',
+		filename='js/failure-intelligence.js'
+	) }}"
+></script>
+
+{% endblock %}

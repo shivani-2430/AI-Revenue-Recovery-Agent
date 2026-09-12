@@ -1,0 +1,757 @@
+{% extends "base.html" %}
+
+{% block title %}
+RecoverAI | Revenue Recovery Command Center
+{% endblock %}
+
+
+{% block extra_css %}
+
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/dashboard.css') }}"
+>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="dashboard">
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="dashboard-header">
+
+        <div>
+
+            <h1>
+                Revenue Recovery Command Center
+            </h1>
+
+            <p>
+                Monitor failed payments, recovery opportunities,
+                AI decisions and real revenue impact.
+            </p>
+
+        </div>
+
+
+        <div class="dashboard-header-insight">
+
+            <span>
+                "Turning failed payments
+                <br>
+                into growth opportunities."
+            </span>
+
+            <small>
+                — RecoverAI
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         KPI CARDS
+    ====================================================== -->
+
+    <div class="kpi-grid">
+
+
+        <!-- Revenue at Risk -->
+
+        <div class="kpi-card">
+
+            <div class="kpi-icon risk-icon">
+
+                <i class="fa-solid fa-indian-rupee-sign"></i>
+
+            </div>
+
+            <div class="kpi-content">
+
+                <div class="kpi-label">
+                    Revenue at Risk
+                </div>
+
+                <div class="kpi-value">
+                    ₹18.42L
+                </div>
+
+                <div class="kpi-change positive">
+                    <i class="fa-solid fa-arrow-up"></i>
+                    12.4%
+                    <span>vs. previous day</span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Expected Recovery -->
+
+        <div class="kpi-card">
+
+            <div class="kpi-icon target-icon">
+
+                <i class="fa-solid fa-bullseye"></i>
+
+            </div>
+
+            <div class="kpi-content">
+
+                <div class="kpi-label">
+                    Expected Recovery
+                </div>
+
+                <div class="kpi-value">
+                    ₹11.67L
+                </div>
+
+                <div class="kpi-change positive">
+                    <i class="fa-solid fa-arrow-up"></i>
+                    8.7%
+                    <span>vs. previous day</span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Recovered -->
+
+        <div class="kpi-card">
+
+            <div class="kpi-icon recovered-icon">
+
+                <i class="fa-solid fa-chart-column"></i>
+
+            </div>
+
+            <div class="kpi-content">
+
+                <div class="kpi-label">
+                    Recovered Revenue
+                </div>
+
+                <div class="kpi-value">
+                    ₹6.94L
+                </div>
+
+                <div class="kpi-change positive">
+                    <i class="fa-solid fa-arrow-up"></i>
+                    14.2%
+                    <span>vs. previous day</span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Recovery Rate -->
+
+        <div class="kpi-card">
+
+            <div class="kpi-icon recovered-icon">
+
+                <i class="fa-solid fa-percent"></i>
+
+            </div>
+
+            <div class="kpi-content">
+
+                <div class="kpi-label">
+                    Recovery Rate
+                </div>
+
+                <div class="kpi-value">
+                    37.7%
+                </div>
+
+                <div class="kpi-change positive">
+                    <i class="fa-solid fa-arrow-up"></i>
+                    5.3%
+                    <span>vs. previous day</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         MAIN ANALYTICS ROW
+    ====================================================== -->
+
+    <div class="analytics-grid">
+
+
+        <!-- Recovery Funnel -->
+
+        <div class="dashboard-card funnel-card">
+
+            <div class="card-header">
+
+                <div>
+
+                    <h2>
+                        Payment Recovery Funnel
+                    </h2>
+
+                    <p>
+                        From failed payments to recovered revenue
+                    </p>
+
+                </div>
+
+                <button class="view-details">
+                    View Details
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+            </div>
+
+
+            <div class="funnel">
+
+                <div class="funnel-stage stage-one">
+                    <span>Failed Payments</span>
+                    <strong>4,821</strong>
+                </div>
+
+                <div class="funnel-stage stage-two">
+                    <span>Revenue at Risk</span>
+                    <strong>₹18.42L</strong>
+                </div>
+
+                <div class="funnel-stage stage-three">
+                    <span>AI Eligible</span>
+                    <strong>3,102</strong>
+                </div>
+
+                <div class="funnel-stage stage-four">
+                    <span>Recovery Actions</span>
+                    <strong>2,641</strong>
+                </div>
+
+                <div class="funnel-stage stage-five">
+                    <span>Successfully Recovered</span>
+                    <strong>1,824 | ₹6.94L</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Revenue Trend -->
+
+        <div class="dashboard-card trend-card">
+
+            <div class="card-header">
+
+                <div>
+
+                    <h2>
+                        Revenue Trend
+                    </h2>
+
+                    <p>
+                        Track revenue at risk, expected recovery
+                        and actual recovered revenue
+                    </p>
+
+                </div>
+
+                <select class="chart-selector">
+
+                    <option>
+                        Revenue at Risk
+                    </option>
+
+                    <option>
+                        Expected Recovery
+                    </option>
+
+                    <option>
+                        Recovered Revenue
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="chart-container">
+
+                <div class="y-axis">
+
+                    <span>₹25L</span>
+                    <span>₹20L</span>
+                    <span>₹15L</span>
+                    <span>₹10L</span>
+                    <span>₹5L</span>
+                    <span>0</span>
+
+                </div>
+
+
+                <div class="chart-area">
+
+                    <div class="grid-line"></div>
+                    <div class="grid-line"></div>
+                    <div class="grid-line"></div>
+                    <div class="grid-line"></div>
+                    <div class="grid-line"></div>
+
+
+                    <svg
+                        class="trend-svg"
+                        viewBox="0 0 700 230"
+                        preserveAspectRatio="none"
+                    >
+
+                        <defs>
+
+                            <linearGradient
+                                id="areaGradient"
+                                x1="0"
+                                y1="0"
+                                x2="0"
+                                y2="1"
+                            >
+
+                                <stop
+                                    offset="0%"
+                                    stop-color="#4F46E5"
+                                    stop-opacity="0.18"
+                                />
+
+                                <stop
+                                    offset="100%"
+                                    stop-color="#4F46E5"
+                                    stop-opacity="0"
+                                />
+
+                            </linearGradient>
+
+                        </defs>
+
+
+                        <path
+                            d="M0 175
+                               C75 168 85 145 150 142
+                               C210 138 235 105 290 98
+                               C350 90 380 112 430 104
+                               C500 95 530 66 570 55
+                               C620 43 650 58 700 38
+                               L700 230
+                               L0 230 Z"
+                            fill="url(#areaGradient)"
+                        />
+
+
+                        <path
+                            d="M0 175
+                               C75 168 85 145 150 142
+                               C210 138 235 105 290 98
+                               C350 90 380 112 430 104
+                               C500 95 530 66 570 55
+                               C620 43 650 58 700 38"
+                            fill="none"
+                            stroke="#4F46E5"
+                            stroke-width="3"
+                        />
+
+
+                        <circle cx="0" cy="175" r="5"/>
+                        <circle cx="150" cy="142" r="5"/>
+                        <circle cx="290" cy="98" r="5"/>
+                        <circle cx="430" cy="104" r="5"/>
+                        <circle cx="570" cy="55" r="5"/>
+                        <circle cx="700" cy="38" r="5"/>
+
+                    </svg>
+
+
+                    <div class="chart-labels">
+
+                        <span>Dec 2</span>
+                        <span>Dec 3</span>
+                        <span>Dec 4</span>
+                        <span>Dec 5</span>
+                        <span>Dec 6</span>
+                        <span>Dec 7</span>
+                        <span>Dec 8</span>
+
+                    </div>
+
+
+                    <div class="chart-tooltip">
+
+                        <strong>
+                            ₹18.4L
+                        </strong>
+
+                        <span>
+                            Dec 8
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         LOWER ANALYTICS
+    ====================================================== -->
+
+    <div class="lower-grid">
+
+
+        <!-- Failure Reasons -->
+
+        <div class="dashboard-card">
+
+            <div class="card-header">
+
+                <div>
+
+                    <h2>
+                        Top Failure Reasons
+                    </h2>
+
+                </div>
+
+                <button class="view-details">
+                    View All
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+            </div>
+
+
+            <div class="failure-table">
+
+                <div class="table-heading">
+                    <span>Failure Reason</span>
+                    <span>Volume</span>
+                    <span>Revenue at Risk</span>
+                </div>
+
+
+                <div class="failure-row">
+
+                    <span>
+                        <i class="fa-solid fa-circle-xmark"></i>
+                        Network Error
+                    </span>
+
+                    <span>32.4%</span>
+
+                    <strong>₹4.82L</strong>
+
+                </div>
+
+
+                <div class="failure-row">
+
+                    <span>
+                        <i class="fa-solid fa-building-columns"></i>
+                        Bank Decline
+                    </span>
+
+                    <span>26.7%</span>
+
+                    <strong>₹3.91L</strong>
+
+                </div>
+
+
+                <div class="failure-row">
+
+                    <span>
+                        <i class="fa-solid fa-wallet"></i>
+                        Insufficient Funds
+                    </span>
+
+                    <span>18.3%</span>
+
+                    <strong>₹3.27L</strong>
+
+                </div>
+
+
+                <div class="failure-row">
+
+                    <span>
+                        <i class="fa-solid fa-lock"></i>
+                        Authentication Failed
+                    </span>
+
+                    <span>11.6%</span>
+
+                    <strong>₹2.04L</strong>
+
+                </div>
+
+
+                <div class="failure-row">
+
+                    <span>
+                        <i class="fa-solid fa-server"></i>
+                        Gateway Timeout
+                    </span>
+
+                    <span>6.9%</span>
+
+                    <strong>₹1.31L</strong>
+
+                </div>
+
+
+                <div class="failure-row">
+
+                    <span>
+                        <i class="fa-solid fa-ellipsis"></i>
+                        Other
+                    </span>
+
+                    <span>4.1%</span>
+
+                    <strong>₹0.72L</strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- AI Decisions -->
+
+        <div class="dashboard-card">
+
+            <div class="card-header">
+
+                <h2>
+                    Recent AI Recovery Decisions
+                </h2>
+
+                <button class="view-details">
+                    View All
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+            </div>
+
+
+            <div class="decision-list">
+
+
+                <div class="decision-row">
+
+                    <div>
+
+                        <strong>
+                            TXN_0001842
+                        </strong>
+
+                        <span>
+                            ₹24,500 · Network Error
+                        </span>
+
+                    </div>
+
+                    <span class="decision-status recoverable">
+                        RECOVERABLE
+                    </span>
+
+                    <strong class="decision-score">
+                        87%
+                    </strong>
+
+                </div>
+
+
+                <div class="decision-row">
+
+                    <div>
+
+                        <strong>
+                            TXN_0001839
+                        </strong>
+
+                        <span>
+                            ₹12,300 · Bank Decline
+                        </span>
+
+                    </div>
+
+                    <span class="decision-status recoverable">
+                        RECOVERABLE
+                    </span>
+
+                    <strong class="decision-score">
+                        76%
+                    </strong>
+
+                </div>
+
+
+                <div class="decision-row">
+
+                    <div>
+
+                        <strong>
+                            TXN_0001832
+                        </strong>
+
+                        <span>
+                            ₹8,450 · Insufficient Funds
+                        </span>
+
+                    </div>
+
+                    <span class="decision-status escalate">
+                        ESCALATE
+                    </span>
+
+                    <strong class="decision-score">
+                        62%
+                    </strong>
+
+                </div>
+
+
+                <div class="decision-row">
+
+                    <div>
+
+                        <strong>
+                            TXN_0001828
+                        </strong>
+
+                        <span>
+                            ₹49,200 · Authentication Failed
+                        </span>
+
+                    </div>
+
+                    <span class="decision-status recoverable">
+                        RECOVERABLE
+                    </span>
+
+                    <strong class="decision-score">
+                        71%
+                    </strong>
+
+                </div>
+
+
+                <div class="decision-row">
+
+                    <div>
+
+                        <strong>
+                            TXN_0001821
+                        </strong>
+
+                        <span>
+                            ₹5,780 · Gateway Timeout
+                        </span>
+
+                    </div>
+
+                    <span class="decision-status stopped">
+                        STOP
+                    </span>
+
+                    <strong class="decision-score">
+                        28%
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- AI Insight -->
+
+        <div class="dashboard-card ai-insight-card">
+
+            <div class="ai-insight-inner">
+
+                <div class="ai-insight-title">
+
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+
+                    <span>
+                        AI Insight
+                    </span>
+
+                </div>
+
+
+                <div class="ai-insight-divider"></div>
+
+
+                <h3>
+                    Network errors show the highest
+                    recovery opportunity today.
+                </h3>
+
+
+                <p>
+                    32.4% of failed payments are due to
+                    network errors with an 82% recovery
+                    likelihood. Prioritize smart retries
+                    for this segment.
+                </p>
+
+
+                <button class="recommendation-button">
+
+                    View Recommendation
+
+                    <i class="fa-solid fa-arrow-right"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script
+    src="{{ url_for('static', filename='js/dashboard.js') }}"
+></script>
+
+{% endblock %}

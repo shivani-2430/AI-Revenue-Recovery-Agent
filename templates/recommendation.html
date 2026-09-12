@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="recommendation-container">
+    <!-- Recommendation Navigation -->
+
+    <div class="recommendation-nav">
+
+        <a href="{{ url_for('recommendations') }}" class="recommendation-nav-item active">
+            <i class="fa-solid fa-lightbulb"></i>
+            <span>Recommendations</span>
+        </a>
+
+        <a href="{{ url_for('ai_strategy') }}" class="recommendation-nav-item">
+            <i class="fa-solid fa-compass-drafting"></i>
+            <span>AI Strategy</span>
+        </a>
+
+        <a href="{{ url_for('ai_advisor') }}" class="recommendation-nav-item">
+            <i class="fa-solid fa-comments"></i>
+            <span>AI Project Advisor</span>
+        </a>
+
+    </div>
+
+    <!-- Header -->
+    <div class="page-header">
+
+        <div class="title-section">
+            <span class="page-tag">AI Generated</span>
+
+            <h1>AI Recommendation</h1>
+
+            <p>
+                Intelligent project recommendations generated using
+                project analytics and risk assessment.
+            </p>
+        </div>
+
+        <div class="confidence-box">
+            <p class="confidence-title">AI Confidence</p>
+            <h2>{{ prediction_confidence|round(0) }}%</h2>
+            <p>Prediction Accuracy</p>
+        </div>
+
+    </div>
+
+    <!-- Overview -->
+    <div class="overview-banner">
+
+        <div class="overview-icon">
+            <i class="fa-solid fa-brain"></i>
+        </div>
+
+        <div class="overview-content">
+            <h2>Recommendation Overview</h2>
+
+            <p>
+                The AI engine analyzed your project details, identified risks,
+                evaluated success probability, and generated the recommendations
+                below.
+            </p>
+        </div>
+
+    </div>
+
+    <!-- Cards -->
+    <div class="cards-grid">
+
+        <!-- Project Health -->
+        <div class="info-card">
+
+            <div class="card-header">
+                <h3>Project Health</h3>
+                <span class="card-icon"></span>
+            </div>
+
+            <div class="health-section">
+
+                {% if health=="Healthy" %}
+                    <span class="health-badge healthy">{{ health }}</span>
+                {% elif health=="Moderate" %}
+                    <span class="health-badge moderate">{{ health }}</span>
+                {% else %}
+                    <span class="health-badge critical">{{ health }}</span>
+                {% endif %}
+
+            </div>
+
+            <div class="metric">
+
+                <label>Success Probability</label>
+
+                <h2>{{ success_probability }}%</h2>
+
+                <div class="progress-bar">
+                    <div class="progress-fill"
+                        data-width="{{ success_probability }}">
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Technologies -->
+        <div class="info-card">
+
+            <div class="card-header">
+                <h3>Recommended Technologies</h3>
+                <span class="card-icon"></span>
+            </div>
+
+            <div class="tech-grid">
+
+                {% for tech in technologies %}
+                    <span class="tech-pill">{{ tech }}</span>
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+        <!-- Priority Actions -->
+        <div class="info-card">
+
+            <div class="card-header">
+                <h3>Priority Actions</h3>
+                <span class="card-icon"></span>
+            </div>
+
+            <div class="action-list">
+
+                {% for action in priority_actions %}
+
+                <div class="action-card">
+                    <div class="action-dot"></div>
+                    <span>{{ action }}</span>
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+        <!-- Risk Mitigation -->
+        <div class="info-card">
+
+            <div class="card-header">
+                <h3>Risk Mitigation</h3>
+                <span class="card-icon"></span>
+            </div>
+
+            <div class="action-list">
+
+                {% for item in mitigation %}
+
+                <div class="action-card">
+                    <div class="action-dot"></div>
+                    <span>{{ item }}</span>
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-card">
+
+        <div class="summary-header">
+
+            <div>
+                <h2>AI Insights</h2>
+
+                <p>
+                    Final recommendation generated from project analytics.
+                </p>
+            </div>
+
+            <span class="summary-badge">
+                Generated
+            </span>
+
+        </div>
+
+        <div class="summary-content">
+
+            {{ summary }}
+
+        </div>
+
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <h4>Project Status</h4>
+            <span>{{ health }}</span>
+        </div>
+
+        <div class="stat-card">
+            <h4>Success Chance</h4>
+            <span>{{ success_probability }}%</span>
+        </div>
+
+        <div class="stat-card">
+            <h4>Technology Stack</h4>
+            <span>{{ technologies|length }}</span>
+        </div>
+
+        <div class="stat-card">
+            <h4>Priority Tasks</h4>
+            <span>{{ priority_actions|length }}</span>
+        </div>
+
+    </div>
+
+    <!-- Navigation -->
+    <div class="navigation">
+
+        <a href="/risk" class="nav-btn primary-btn">
+            ← Previous
+        </a>
+
+        <a href="/market" class="nav-btn primary-btn">
+            Continue →
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

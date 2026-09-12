@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+
+.market-container{
+    padding:30px;
+}
+
+.page-title{
+    font-size:38px;
+    font-weight:bold;
+    color:#1e3a8a;
+    margin-bottom:30px;
+}
+
+.top-grid{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:25px;
+
+    margin-bottom:30px;
+}
+
+.bottom-grid{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:25px;
+
+    margin-top:30px;
+}
+
+.card{
+
+    background:white;
+
+    border-radius:15px;
+
+    padding:25px;
+
+    box-shadow:0 4px 12px rgba(0,0,0,.12);
+
+    transition:.3s;
+
+    min-height:220px;
+}
+
+.card:hover{
+
+    transform:translateY(-8px);
+
+    box-shadow:0 10px 25px rgba(37,99,235,.25);
+}
+
+.card h3{
+
+    color:#2563eb;
+
+    margin-bottom:20px;
+}
+
+.big-card{
+
+    background:white;
+
+    border-radius:15px;
+
+    overflow:hidden;
+
+    padding:25px;
+
+    box-shadow:0 4px 12px rgba(0,0,0,.12);
+}
+
+.big-card h3{
+
+    color:#2563eb;
+
+    margin-bottom:20px;
+}
+
+.badge{
+
+    display:inline-block;
+
+    padding:8px 18px;
+
+    border-radius:20px;
+
+    background:#16a34a;
+
+    color:white;
+
+    font-weight:bold;
+
+    margin-top:15px;
+}
+
+.growth{
+
+    margin-top:20px;
+
+    font-size:20px;
+
+    color:#2563eb;
+
+    font-weight:bold;
+}
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    margin-top:20px;
+}
+
+th{
+
+    background:linear-gradient(90deg,#2563eb,#3b82f6);
+
+    color:white;
+
+    padding:14px;
+}
+
+td{
+
+    padding:14px;
+
+    border-bottom:1px solid #ddd;
+
+    text-align:center;
+}
+
+tr:hover{
+
+    background:#f3f7ff;
+}
+
+.swot-item{
+
+    margin-bottom:18px;
+}
+
+.swot-item strong{
+
+    color:#1e3a8a;
+}
+
+.insight{
+
+    line-height:1.8;
+}
+
+.navigation{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    margin-top:35px;
+}
+
+.nav-btn{
+
+    text-decoration:none;
+
+    background:#2563eb;
+
+    color:white;
+
+    padding:12px 28px;
+
+    border-radius:8px;
+
+    font-weight:bold;
+}
+
+.nav-btn:hover{
+
+    background:#1d4ed8;
+}
+
+</style>
+
+<div class="market-container">
+
+<h1 class="page-title">
+    <i class="fa-solid fa-chart-line"></i> Market Intelligence
+</h1>
+
+<div class="top-grid">
+
+    <!-- Industry Overview -->
+
+    <div class="card">
+
+        <div style="text-align:center;">
+
+            <div style="font-size:60px;">
+                <i class="fa-solid fa-briefcase-medical"></i>
+            </div>
+
+            <h3>Industry Overview</h3>
+
+            <h2>{{ industry }}</h2>
+
+            <p style="color:#666;">
+                Industry Analysis
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- Market Demand -->
+
+    <div class="card">
+
+        <div style="text-align:center;">
+
+            <div style="font-size:55px;">
+                <i class="fa-solid fa-arrow-trend-up"></i>
+            </div>
+
+            <h3>Market Demand</h3>
+
+            <div class="badge">
+                {{ demand }}
+            </div>
+
+            <div class="growth">
+                {{ growth }}
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="big-card">
+
+<h3>Competitor Analysis</h3>
+
+<table>
+
+<tr>
+
+<th>Company</th>
+
+<th>Similarity</th>
+
+<th>Market Position</th>
+
+</tr>
+
+{% for company, similarity, position in competitors %}
+
+<tr>
+
+<td>{{ company }}</td>
+
+<td>{{ similarity }}</td>
+
+<td>{{ position }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+
+<div class="bottom-grid">
+
+<div class="card">
+
+<h3>SWOT Analysis</h3>
+
+<div class="swot-item">
+
+<strong>Strength</strong>
+
+<p>{{ swot.strength }}</p>
+
+</div>
+
+<div class="swot-item">
+
+<strong>Weakness</strong>
+
+<p>{{ swot.weakness }}</p>
+
+</div>
+
+<div class="swot-item">
+
+<strong>Opportunity</strong>
+
+<p>{{ swot.opportunity }}</p>
+
+</div>
+
+<div class="swot-item">
+
+<strong>Threat</strong>
+
+<p>{{ swot.threat }}</p>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>AI Insights</h3>
+
+<p class="insight">
+
+{{ insights }}
+
+</p>
+
+</div>
+
+</div>
+
+
+<div class="navigation">
+
+<a href="/recommendation" class="nav-btn">
+
+← Previous
+
+</a>
+
+<a href="/decision-simulator" class="nav-btn">
+    Next →
+</a>
+
+</div>
+
+</div>
+
+{% endblock %}

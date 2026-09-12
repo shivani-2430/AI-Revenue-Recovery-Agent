@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card">
+
+    <h2>Edit Project</h2>
+
+    <form action="/update/{{ project.id }}" method="POST">
+
+        <div class="form-group">
+            <label>Project Name</label>
+            <input type="text"
+                   name="project_name"
+                   value="{{ project.project_name }}">
+        </div>
+
+        <div class="form-group">
+            <label>Organization</label>
+            <input type="text"
+                   name="organization"
+                   value="{{ project.organization }}">
+        </div>
+
+        <div class="form-group">
+            <label>Domain</label>
+            <input type="text"
+                   name="domain"
+                   value="{{ project.domain }}">
+        </div>
+
+        <div class="form-group">
+            <label>Technology Stack</label>
+            <input type="text"
+                   name="tech_stack"
+                   value="{{ project.tech_stack }}">
+        </div>
+
+        <div class="form-group">
+            <label>Description</label>
+            <textarea
+                name="description"
+                rows="5">{{ project.description }}</textarea>
+        </div>
+
+        <button type="submit">
+            Update Project
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

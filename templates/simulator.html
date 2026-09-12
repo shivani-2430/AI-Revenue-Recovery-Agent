@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+
+
+{% block extra_css %}
+
+<link
+	rel="stylesheet"
+	href="{{ url_for(
+		'static',
+		filename='css/simulator.css'
+	) }}"
+>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="simulator-page">
+
+
+	<!-- =====================================================
+	     HEADER
+	     ===================================================== -->
+
+	<div class="simulator-header">
+
+		<div>
+
+			<div class="simulator-eyebrow">
+				RECOVERY SIMULATOR
+			</div>
+
+			<h1>
+				Recovery Simulator
+			</h1>
+
+			<p>
+				Test recovery strategies against failed payment events
+				before deploying them to production.
+			</p>
+
+		</div>
+
+		<div class="simulator-status">
+
+			<span></span>
+
+			SIMULATION MODE
+
+		</div>
+
+	</div>
+
+
+	<!-- =====================================================
+	     CONTROLS
+	     ===================================================== -->
+
+	<section class="simulator-controls-card">
+
+		<div class="controls-heading">
+
+			<div>
+
+				<h2>
+					Simulation Controls
+				</h2>
+
+				<p>
+					Adjust the recovery policy and evaluate the outcome.
+				</p>
+
+			</div>
+
+			<button
+				id="runSimulation"
+				class="run-button"
+			>
+
+				<i class="fa-solid fa-play"></i>
+
+				Run Simulation
+
+			</button>
+
+		</div>
+
+
+		<div class="controls-grid">
+
+
+			<div class="control-group">
+
+				<label for="batchSize">
+					Batch Size
+				</label>
+
+				<select id="batchSize">
+
+					<option value="500">
+						500 events
+					</option>
+
+					<option
+						value="1000"
+						selected
+					>
+						1,000 events
+					</option>
+
+					<option value="2500">
+						2,500 events
+					</option>
+
+					<option value="5000">
+						5,000 events
+					</option>
+
+					<option value="10000">
+						10,000 events
+					</option>
+
+				</select>
+
+			</div>
+
+
+			<div class="control-group">
+
+				<label for="minProbability">
+
+					Minimum Recovery Probability
+
+					<strong id="probabilityValue">
+						40%
+					</strong>
+
+				</label>
+
+				<input
+					type="range"
+					id="minProbability"
+					min="10"
+					max="90"
+					value="40"
+					step="5"
+				>
+
+			</div>
+
+
+			<div class="control-group">
+
+				<label for="maxRetries">
+
+					Maximum Retry Count
+
+					<strong id="retryValue">
+						3
+					</strong>
+
+				</label>
+
+				<input
+					type="range"
+					id="maxRetries"
+					min="0"
+					max="5"
+					value="3"
+					step="1"
+				>
+
+			</div>
+
+		</div>
+
+	</section>
+
+
+	<!-- =====================================================
+	     SUMMARY
+	     ===================================================== -->
+
+	<div class="simulation-summary-grid">
+
+
+		<div class="simulation-card">
+
+			<div class="simulation-icon red">
+				<i class="fa-solid fa-money-bill-transfer"></i>
+			</div>
+
+			<div>
+
+				<span>
+					Revenue at Risk
+				</span>
+
+				<strong id="revenueAtRisk">
+					--
+				</strong>
+
+			</div>
+
+		</div>
+
+
+		<div class="simulation-card">
+
+			<div class="simulation-icon indigo">
+				<i class="fa-solid fa-wand-magic-sparkles"></i>
+			</div>
+
+			<div>
+
+				<span>
+					Expected Recovery
+				</span>
+
+				<strong id="expectedRecovery">
+					--
+				</strong>
+
+			</div>
+
+		</div>
+
+
+		<div class="simulation-card">
+
+			<div class="simulation-icon green">
+				<i class="fa-solid fa-circle-check"></i>
+			</div>
+
+			<div>
+
+				<span>
+					Recovered Revenue
+				</span>
+
+				<strong id="recoveredRevenue">
+					--
+				</strong>
+
+			</div>
+
+		</div>
+
+
+		<div class="simulation-card">
+
+			<div class="simulation-icon navy">
+				<i class="fa-solid fa-percent"></i>
+			</div>
+
+			<div>
+
+				<span>
+					Recovery Rate
+				</span>
+
+				<strong id="recoveryRate">
+					--
+				</strong>
+
+			</div>
+
+		</div>
+
+
+	</div>
+
+
+	<!-- =====================================================
+	     FUNNEL + ACTIONS
+	     ===================================================== -->
+
+	<div class="simulator-grid">
+
+
+		<section class="simulator-card">
+
+			<div class="card-heading">
+
+				<div>
+
+					<h2>
+						Recovery Funnel
+					</h2>
+
+					<p>
+						How the simulated batch moves through recovery.
+					</p>
+
+				</div>
+
+			</div>
+
+			<div
+				id="recoveryFunnel"
+				class="recovery-funnel"
+			>
+
+				<div class="simulation-loading">
+					<i class="fa-solid fa-circle-notch fa-spin"></i>
+					Running simulation...
+				</div>
+
+			</div>
+
+		</section>
+
+
+		<section class="simulator-card">
+
+			<div class="card-heading">
+
+				<div>
+
+					<h2>
+						Recovery Actions
+					</h2>
+
+					<p>
+						Recommended intervention distribution.
+					</p>
+
+				</div>
+
+			</div>
+
+			<div
+				id="actionDistribution"
+				class="action-distribution"
+			>
+
+				<div class="simulation-loading">
+					<i class="fa-solid fa-circle-notch fa-spin"></i>
+					Calculating actions...
+				</div>
+
+			</div>
+
+		</section>
+
+
+	</div>
+
+
+	<!-- =====================================================
+	     SIMULATION RESULTS
+	     ===================================================== -->
+
+	<section class="simulator-card results-card">
+
+		<div class="card-heading">
+
+			<div>
+
+				<h2>
+					Simulation Results
+				</h2>
+
+				<p>
+					Operational impact under the selected recovery policy.
+				</p>
+
+			</div>
+
+		</div>
+
+
+		<div class="results-grid">
+
+
+			<div class="result-item">
+
+				<span>
+					Failed Payments
+				</span>
+
+				<strong id="failedPayments">
+					--
+				</strong>
+
+			</div>
+
+
+			<div class="result-item">
+
+				<span>
+					Eligible Opportunities
+				</span>
+
+				<strong id="eligibleOpportunities">
+					--
+				</strong>
+
+			</div>
+
+
+			<div class="result-item">
+
+				<span>
+					Recovery Attempts
+				</span>
+
+				<strong id="recoveryAttempts">
+					--
+				</strong>
+
+			</div>
+
+
+			<div class="result-item">
+
+				<span>
+					Recovered Transactions
+				</span>
+
+				<strong id="recoveredTransactions">
+					--
+				</strong>
+
+			</div>
+
+
+			<div class="result-item">
+
+				<span>
+					Guardrail Blocked
+				</span>
+
+				<strong id="guardrailBlocked">
+					--
+				</strong>
+
+			</div>
+
+
+			<div class="result-item">
+
+				<span>
+					Expected Recovery
+				</span>
+
+				<strong id="resultExpectedRecovery">
+					--
+				</strong>
+
+			</div>
+
+		</div>
+
+	</section>
+
+
+	<!-- =====================================================
+	     INSIGHT
+	     ===================================================== -->
+
+	<section class="simulation-insight">
+
+		<div class="insight-icon">
+
+			<i class="fa-solid fa-brain"></i>
+
+		</div>
+
+		<div>
+
+			<div class="insight-label">
+				RECOVERAI SIMULATION INSIGHT
+			</div>
+
+			<h2 id="simulationInsightTitle">
+				Analyzing recovery strategy...
+			</h2>
+
+			<p id="simulationInsightDescription">
+				The simulation engine is evaluating the selected policy.
+			</p>
+
+		</div>
+
+	</section>
+
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script
+	src="{{ url_for(
+		'static',
+		filename='js/simulator.js'
+	) }}"
+></script>
+
+{% endblock %}

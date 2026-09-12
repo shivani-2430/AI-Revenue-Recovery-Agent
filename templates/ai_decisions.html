@@ -1,0 +1,679 @@
+{% extends "base.html" %}
+
+{% block title %}
+AI Decisions | RecoverAI
+{% endblock %}
+
+
+{% block extra_css %}
+
+<link
+    rel="stylesheet"
+    href="{{ url_for(
+        'static',
+        filename='css/ai-decisions.css'
+    ) }}"
+>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div
+    class="ai-decisions-page"
+    id="aiDecisionsPage"
+>
+
+    <!-- =====================================================
+         PAGE HEADER
+         ===================================================== -->
+
+    <section class="page-header">
+
+        <div>
+
+            <div class="eyebrow">
+                AI OPERATIONS
+            </div>
+
+            <h1>
+                AI Decision Center
+            </h1>
+
+            <p>
+                Review recovery decisions,
+                reasoning, confidence and guardrail validation.
+            </p>
+
+        </div>
+
+        <button
+            class="refresh-button"
+            id="refreshDecisions"
+            type="button"
+        >
+
+            <i class="fa-solid fa-rotate"></i>
+
+            Refresh
+
+        </button>
+
+    </section>
+
+
+    <!-- =====================================================
+         SUMMARY
+         ===================================================== -->
+
+    <section class="decision-summary-grid">
+
+        <article class="summary-card">
+
+            <div class="summary-icon indigo">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+
+            <div>
+
+                <span>
+                    Total Decisions
+                </span>
+
+                <strong id="totalDecisions">
+                    --
+                </strong>
+
+                <small>
+                    recovery decisions evaluated
+                </small>
+
+            </div>
+
+        </article>
+
+
+        <article class="summary-card">
+
+            <div class="summary-icon green">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+
+            <div>
+
+                <span>
+                    Approved
+                </span>
+
+                <strong id="approvedDecisions">
+                    --
+                </strong>
+
+                <small>
+                    passed recovery guardrails
+                </small>
+
+            </div>
+
+        </article>
+
+
+        <article class="summary-card">
+
+            <div class="summary-icon red">
+                <i class="fa-solid fa-ban"></i>
+            </div>
+
+            <div>
+
+                <span>
+                    Blocked
+                </span>
+
+                <strong id="blockedDecisions">
+                    --
+                </strong>
+
+                <small>
+                    prevented by policy
+                </small>
+
+            </div>
+
+        </article>
+
+
+        <article class="summary-card">
+
+            <div class="summary-icon navy">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+
+            <div>
+
+                <span>
+                    Escalated
+                </span>
+
+                <strong id="escalatedDecisions">
+                    --
+                </strong>
+
+                <small>
+                    require human review
+                </small>
+
+            </div>
+
+        </article>
+
+    </section>
+
+
+    <!-- =====================================================
+         MAIN WORKSPACE
+         ===================================================== -->
+
+    <section class="decision-workspace">
+
+        <!-- LEFT -->
+        <div class="decision-feed-panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h2>
+                        Decision Feed
+                    </h2>
+
+                    <p>
+                        AI-generated recovery decisions
+                        from failed payment events.
+                    </p>
+
+                </div>
+
+                <span
+                    class="live-indicator"
+                >
+                    <span></span>
+                    LIVE DATA
+                </span>
+
+            </div>
+
+
+            <!-- FILTERS -->
+
+            <div class="decision-filters">
+
+                <div class="search-box">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input
+                        id="decisionSearch"
+                        type="search"
+                        placeholder="Search transaction, customer, decision..."
+                    >
+
+                </div>
+
+
+                <select
+                    id="statusFilter"
+                >
+
+                    <option value="">
+                        All Status
+                    </option>
+
+                    <option value="APPROVED">
+                        Approved
+                    </option>
+
+                    <option value="ESCALATED">
+                        Escalated
+                    </option>
+
+                    <option value="BLOCKED">
+                        Blocked
+                    </option>
+
+                </select>
+
+
+                <select
+                    id="guardrailFilter"
+                >
+
+                    <option value="">
+                        All Guardrails
+                    </option>
+
+                    <option value="PASSED">
+                        Passed
+                    </option>
+
+                    <option value="REVIEW">
+                        Review
+                    </option>
+
+                    <option value="BLOCKED">
+                        Blocked
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- FEED -->
+
+            <div
+                class="decision-feed"
+                id="decisionFeed"
+            ></div>
+
+
+            <div
+                class="feed-loading"
+                id="feedLoading"
+            >
+
+                <i
+                    class="fa-solid fa-circle-notch fa-spin"
+                ></i>
+
+                Loading AI decisions...
+
+            </div>
+
+
+            <div
+                class="feed-empty"
+                id="feedEmpty"
+                hidden
+            >
+
+                <i class="fa-solid fa-inbox"></i>
+
+                <strong>
+                    No decisions found
+                </strong>
+
+                <span>
+                    No AI decisions match the current filters.
+                </span>
+
+            </div>
+
+
+            <!-- PAGINATION -->
+
+            <div class="pagination">
+
+                <span id="paginationInfo">
+                    --
+                </span>
+
+                <div>
+
+                    <button
+                        id="previousPage"
+                        type="button"
+                    >
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+
+                    <span id="currentPage">
+                        1
+                    </span>
+
+                    <button
+                        id="nextPage"
+                        type="button"
+                    >
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- RIGHT -->
+        <aside class="decision-detail-panel">
+
+            <div
+                class="detail-empty"
+                id="detailEmpty"
+            >
+
+                <div class="empty-ai-icon">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+
+                <h3>
+                    Select a decision
+                </h3>
+
+                <p>
+                    Choose a decision from the feed
+                    to inspect its reasoning,
+                    recovery value and guardrails.
+                </p>
+
+            </div>
+
+
+            <div
+                class="decision-detail"
+                id="decisionDetail"
+                hidden
+            >
+
+                <!-- DETAIL HEADER -->
+
+                <div class="detail-header">
+
+                    <div>
+
+                        <span class="detail-eyebrow">
+                            AI DECISION
+                        </span>
+
+                        <h2 id="detailAction">
+                            --
+                        </h2>
+
+                        <span id="detailDecisionId">
+                            --
+                        </span>
+
+                    </div>
+
+                    <span
+                        id="detailStatus"
+                        class="decision-status"
+                    >
+                        --
+                    </span>
+
+                </div>
+
+
+                <!-- TRANSACTION -->
+
+                <div class="detail-transaction">
+
+                    <span>
+                        Transaction
+                    </span>
+
+                    <a
+                        id="detailTransaction"
+                        href="#"
+                    >
+                        --
+                    </a>
+
+                </div>
+
+
+                <!-- METRICS -->
+
+                <div class="detail-metrics">
+
+                    <div>
+
+                        <span>
+                            Recovery Probability
+                        </span>
+
+                        <strong
+                            id="detailProbability"
+                        >
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            AI Confidence
+                        </span>
+
+                        <strong
+                            id="detailConfidence"
+                        >
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Revenue at Risk
+                        </span>
+
+                        <strong
+                            id="detailRevenueRisk"
+                        >
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Expected Recovery
+                        </span>
+
+                        <strong
+                            id="detailExpectedRecovery"
+                        >
+                            --
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- REASONING -->
+
+                <section class="detail-section">
+
+                    <div class="section-title">
+
+                        <i class="fa-solid fa-brain"></i>
+
+                        Decision Reasoning
+
+                    </div>
+
+                    <p
+                        id="detailExplanation"
+                        class="decision-explanation"
+                    >
+                        --
+                    </p>
+
+
+                    <div
+                        id="detailReasons"
+                        class="reason-list"
+                    ></div>
+
+                </section>
+
+
+                <!-- GUARDRAILS -->
+
+                <section class="guardrail-section">
+
+                    <div class="section-title">
+
+                        <i class="fa-solid fa-shield-halved"></i>
+
+                        Guardrail Validation
+
+                    </div>
+
+
+                    <div class="guardrail-row">
+
+                        <div>
+
+                            <span>
+                                Policy
+                            </span>
+
+                            <strong
+                                id="detailPolicy"
+                            >
+                                --
+                            </strong>
+
+                        </div>
+
+
+                        <span
+                            id="detailGuardrail"
+                            class="guardrail-result"
+                        >
+                            --
+                        </span>
+
+                    </div>
+
+                </section>
+
+
+                <!-- CONTEXT -->
+
+                <section class="detail-section">
+
+                    <div class="section-title">
+
+                        <i class="fa-solid fa-chart-simple"></i>
+
+                        Decision Context
+
+                    </div>
+
+
+                    <div class="context-grid">
+
+                        <div>
+
+                            <span>
+                                Customer
+                            </span>
+
+                            <strong
+                                id="detailCustomer"
+                            >
+                                --
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Payment Method
+                            </span>
+
+                            <strong
+                                id="detailPaymentMethod"
+                            >
+                                --
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Failure Reason
+                            </span>
+
+                            <strong
+                                id="detailFailure"
+                            >
+                                --
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Retry Count
+                            </span>
+
+                            <strong
+                                id="detailRetryCount"
+                            >
+                                --
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- MODEL -->
+
+                <div class="model-footer">
+
+                    <span>
+                        <i class="fa-solid fa-microchip"></i>
+
+                        Model
+                    </span>
+
+                    <strong id="detailModel">
+                        --
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </aside>
+
+    </section>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/ai-decisions.js'
+    ) }}"
+></script>
+
+{% endblock %}

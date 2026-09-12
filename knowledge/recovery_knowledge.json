@@ -1,0 +1,62 @@
+[
+  {
+    "id": "generic_retry",
+    "category": "retry_strategy",
+    "title": "Retry Failed Payment",
+    "content": "A failed payment may be retried when the transaction context indicates that another payment attempt is appropriate. Retry timing and frequency should respect the available transaction history and retry count. Repeated retries should be avoided when the available context indicates low recovery potential."
+  },
+  {
+    "id": "high_recovery_probability",
+    "category": "recovery_strategy",
+    "title": "Prioritize High Recovery Probability",
+    "content": "Transactions with stronger predicted recovery probability should receive higher recovery priority because the model indicates greater potential for successful recovery. The prediction is an analytical signal and does not guarantee successful payment."
+  },
+  {
+    "id": "high_value_customer",
+    "category": "customer_strategy",
+    "title": "Prioritize Valuable Customers",
+    "content": "When customer value is available, higher-value customers can receive greater recovery attention. Customer value should be considered together with recovery probability, payment history, failure reason, and retry history."
+  },
+  {
+    "id": "retry_limit",
+    "category": "retry_strategy",
+    "title": "Avoid Excessive Retries",
+    "content": "Repeated payment retries can become less useful when the retry count is already high. Recovery decisions should consider the existing retry count and avoid blindly repeating unsuccessful attempts."
+  },
+  {
+    "id": "payment_method",
+    "category": "payment_strategy",
+    "title": "Consider Payment Method",
+    "content": "The payment method associated with a failed transaction should be considered when determining the recovery approach. When an alternative payment method is available in the transaction context, it may be considered as part of the recovery strategy."
+  },
+  {
+    "id": "failure_reason",
+    "category": "failure_diagnosis",
+    "title": "Use Failure Reason",
+    "content": "The recorded failure reason is an important signal for determining an appropriate recovery action. Recovery recommendations should be consistent with the observed failure reason and should not invent a different cause."
+  },
+  {
+    "id": "subscription_recovery",
+    "category": "subscription",
+    "title": "Subscription Payment Recovery",
+    "content": "For failed subscription-related payments, recovery should consider subscription status, customer payment history, retry count, transaction value, and predicted recovery potential."
+  },
+  {
+    "id": "recovery_communication",
+    "category": "customer_strategy",
+    "title": "Recovery Communication",
+    "content": "When automated payment recovery is not sufficient, a recovery communication can be considered to encourage another payment attempt. The system should not claim that a communication has been sent unless execution data confirms it."
+  },
+  {
+    "id": "low_recovery_probability",
+    "category": "recovery_strategy",
+    "title": "Low Recovery Probability",
+    "content": "When the ML model indicates low recovery probability, automated recovery should be more conservative. The system should avoid unnecessary repeated attempts and may prioritize review or a lower-frequency recovery approach."
+  },
+  {
+    "id": "recovery_guardrail",
+    "category": "safety",
+    "title": "Recovery Decision Guardrails",
+    "content": "AI-generated recovery recommendations should remain grounded in transaction data and available recovery policies. The AI should recommend actions but should not claim execution unless an execution system confirms the action."
+  }
+]

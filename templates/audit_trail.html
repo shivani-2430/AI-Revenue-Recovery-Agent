@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+
+
+{% block extra_css %}
+
+<link
+	rel="stylesheet"
+	href="{{ url_for(
+		'static',
+		filename='css/audit-trail.css'
+	) }}"
+>
+
+{% endblock %}
+
+
+{% block content %}
+
+<main class="audit-page">
+
+	<section class="audit-header">
+
+		<div>
+
+			<div class="audit-eyebrow">
+				GOVERNANCE
+			</div>
+
+			<h1>
+				Audit Trail
+			</h1>
+
+			<p>
+				Track recovery decisions, model inputs,
+				guardrail outcomes, and recovery results.
+			</p>
+
+		</div>
+
+
+		<div class="audit-status">
+
+			<span></span>
+
+			AUDIT LOG ACTIVE
+
+		</div>
+
+	</section>
+
+
+	<!-- =====================================================
+	     SUMMARY
+	====================================================== -->
+
+	<section class="audit-summary-grid">
+
+		<div class="audit-summary-card">
+
+			<div class="audit-summary-icon indigo">
+				<i class="fa-solid fa-list-check"></i>
+			</div>
+
+			<div>
+				<span>Total Events</span>
+				<strong id="totalEvents">-</strong>
+			</div>
+
+		</div>
+
+
+		<div class="audit-summary-card">
+
+			<div class="audit-summary-icon green">
+				<i class="fa-solid fa-circle-check"></i>
+			</div>
+
+			<div>
+				<span>Approved</span>
+				<strong id="approvedEvents">-</strong>
+			</div>
+
+		</div>
+
+
+		<div class="audit-summary-card">
+
+			<div class="audit-summary-icon red">
+				<i class="fa-solid fa-ban"></i>
+			</div>
+
+			<div>
+				<span>Blocked</span>
+				<strong id="blockedEvents">-</strong>
+			</div>
+
+		</div>
+
+
+		<div class="audit-summary-card">
+
+			<div class="audit-summary-icon navy">
+				<i class="fa-solid fa-user-shield"></i>
+			</div>
+
+			<div>
+				<span>Escalated</span>
+				<strong id="escalatedEvents">-</strong>
+			</div>
+
+		</div>
+
+	</section>
+
+
+	<!-- =====================================================
+	     FILTERS
+	====================================================== -->
+
+	<section class="audit-card">
+
+		<div class="audit-filters">
+
+			<div class="audit-search">
+
+				<i class="fa-solid fa-magnifying-glass"></i>
+
+				<input
+					type="text"
+					id="auditSearch"
+					placeholder="Search transaction, customer, decision..."
+				>
+
+			</div>
+
+
+			<select id="auditStatus">
+
+				<option value="">
+					All Statuses
+				</option>
+
+				<option value="APPROVED">
+					Approved
+				</option>
+
+				<option value="BLOCKED">
+					Blocked
+				</option>
+
+				<option value="ESCALATED">
+					Escalated
+				</option>
+
+			</select>
+
+
+			<select id="auditAction">
+
+				<option value="">
+					All Actions
+				</option>
+
+				<option value="SMART RETRY">
+					Smart Retry
+				</option>
+
+				<option value="PAYMENT LINK">
+					Payment Link
+				</option>
+
+				<option value="CUSTOMER REMINDER">
+					Customer Reminder
+				</option>
+
+				<option value="ESCALATION">
+					Escalation
+				</option>
+
+			</select>
+
+
+			<select id="auditGuardrail">
+
+				<option value="">
+					All Guardrails
+				</option>
+
+				<option value="PASSED">
+					Passed
+				</option>
+
+				<option value="RETRY LIMIT">
+					Retry Limit
+				</option>
+
+				<option value="LOW RECOVERY PROBABILITY">
+					Low Recovery Probability
+				</option>
+
+				<option value="HIGH VALUE REVIEW">
+					High Value Review
+				</option>
+
+			</select>
+
+
+			<button
+				type="button"
+				id="refreshAudit"
+				class="audit-refresh"
+			>
+
+				<i class="fa-solid fa-rotate"></i>
+
+				Refresh
+
+			</button>
+
+		</div>
+
+	</section>
+
+
+	<!-- =====================================================
+	     AUDIT TABLE
+	====================================================== -->
+
+	<section class="audit-card audit-table-card">
+
+		<div class="audit-table-wrapper">
+
+			<table class="audit-table">
+
+				<thead>
+
+					<tr>
+
+						<th>Decision</th>
+
+						<th>Transaction</th>
+
+						<th>Timestamp</th>
+
+						<th>Model / Score</th>
+
+						<th>Recommendation</th>
+
+						<th>Guardrail</th>
+
+						<th>Status</th>
+
+						<th>Outcome</th>
+
+						<th>Recovered</th>
+
+					</tr>
+
+				</thead>
+
+
+				<tbody id="auditTableBody">
+
+					<tr>
+
+						<td
+							colspan="9"
+							class="audit-loading"
+						>
+							<i class="fa-solid fa-circle-notch fa-spin"></i>
+							Loading audit events...
+						</td>
+
+					</tr>
+
+				</tbody>
+
+			</table>
+
+		</div>
+
+
+		<div
+			id="auditEmpty"
+			class="audit-empty"
+			hidden
+		>
+
+			<i class="fa-regular fa-folder-open"></i>
+
+			No audit events found.
+
+		</div>
+
+
+		<div class="audit-pagination">
+
+			<div id="auditPaginationInfo">
+				-
+			</div>
+
+
+			<div class="audit-pagination-buttons">
+
+				<button
+					type="button"
+					id="previousAudit"
+				>
+					<i class="fa-solid fa-chevron-left"></i>
+				</button>
+
+				<span id="auditCurrentPage">
+					1
+				</span>
+
+				<button
+					type="button"
+					id="nextAudit"
+				>
+					<i class="fa-solid fa-chevron-right"></i>
+				</button>
+
+			</div>
+
+		</div>
+
+	</section>
+
+
+	<!-- =====================================================
+	     REVENUE IMPACT
+	====================================================== -->
+
+	<section class="audit-impact">
+
+		<div class="impact-icon">
+
+			<i class="fa-solid fa-chart-line"></i>
+
+		</div>
+
+
+		<div>
+
+			<div class="impact-label">
+				AUDIT REVENUE IMPACT
+			</div>
+
+			<h2 id="revenueAtRisk">
+				-
+			</h2>
+
+			<p>
+				Revenue at risk represented by the
+				audited recovery decisions.
+			</p>
+
+		</div>
+
+
+		<div class="impact-recovered">
+
+			<span>
+				Recovered Revenue
+			</span>
+
+			<strong id="recoveredRevenue">
+				-
+			</strong>
+
+		</div>
+
+	</section>
+
+</main>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script
+	src="{{ url_for(
+		'static',
+		filename='js/audit-trail.js'
+	) }}"
+></script>
+
+{% endblock %}

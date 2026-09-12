@@ -1,0 +1,60 @@
+{
+    "model": "RandomForestClassifier",
+    "dataset_rows": 10000,
+    "failed_transactions": 1118,
+    "training_samples": 894,
+    "testing_samples": 224,
+    "features": [
+        "amount",
+        "payment_method",
+        "merchant_category",
+        "failure_reason",
+        "retry_count",
+        "customer_segment",
+        "customer_age_days",
+        "successful_payments",
+        "failed_payments",
+        "historical_success_rate",
+        "customer_value",
+        "subscription_status",
+        "hour",
+        "day_of_week",
+        "high_value_customer",
+        "previous_recovery_success"
+    ],
+    "numeric_features": [
+        "amount",
+        "retry_count",
+        "customer_age_days",
+        "successful_payments",
+        "failed_payments",
+        "historical_success_rate",
+        "customer_value",
+        "hour",
+        "day_of_week",
+        "high_value_customer",
+        "previous_recovery_success"
+    ],
+    "categorical_features": [
+        "payment_method",
+        "merchant_category",
+        "failure_reason",
+        "customer_segment",
+        "subscription_status"
+    ],
+    "accuracy": 0.6607,
+    "precision": 0.5955,
+    "recall": 0.5699,
+    "f1_score": 0.5824,
+    "roc_auc": 0.6662,
+    "confusion_matrix": [
+        [
+            95,
+            36
+        ],
+        [
+            40,
+            53
+        ]
+    ]
+}

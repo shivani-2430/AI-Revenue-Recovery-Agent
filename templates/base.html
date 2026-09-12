@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>{% block title %}RecoverAI{% endblock %}</title>
+
+    <!-- Font -->
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <!-- Main stylesheet -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/app.css') }}"
+    >
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <!-- =========================================================
+         SIDEBAR
+    ========================================================== -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                <i class="fa-solid fa-bolt"></i>
+            </div>
+
+            <div class="brand-text">
+                <div class="brand-name">RecoverAI</div>
+                <div class="brand-subtitle">Revenue Intelligence</div>
+            </div>
+
+        </div>
+
+
+        <nav class="sidebar-navigation">
+
+            <!-- Overview -->
+
+            <div class="nav-section">
+
+                <div class="nav-section-title">
+                    OVERVIEW
+                </div>
+
+                <a
+                    href="{{ url_for('dashboard') }}"
+                    class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}"
+                >
+                    <span class="nav-icon">
+                        <i class="fa-solid fa-house"></i>
+                    </span>
+
+                    <span>Overview</span>
+                </a>
+
+            </div>
+
+
+            <!-- Revenue -->
+
+            <div class="nav-section">
+
+                <div class="nav-section-title">
+                    REVENUE
+                </div>
+
+                <a
+                    href="/transactions"
+                    class="nav-item {% if request.endpoint in ['transactions', 'transaction_details'] %}active{% endif %}"
+                >
+                    <span class="nav-icon">
+                        <i class="fa-regular fa-credit-card"></i>
+                    </span>
+
+                    <span>Transactions</span>
+                </a>
+
+                <a href="/recovery-queue" class="nav-item">
+                    <span class="nav-icon">
+                        <i class="fa-solid fa-rotate"></i>
+                    </span>
+
+                    <span>Recovery Queue</span>
+                </a>
+
+                <a href="/customers" class="nav-item">
+                    <span class="nav-icon">
+                        <i class="fa-regular fa-user"></i>
+                    </span>
+
+                    <span>Customers</span>
+                </a>
+
+            </div>
+
+
+            <!-- Intelligence -->
+
+            <div class="nav-section">
+
+                <div class="nav-section-title">
+                    INTELLIGENCE
+                </div>
+
+                <a href="/ai-decisions" class="nav-item">
+                    <span class="nav-icon">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </span>
+
+                    <span>AI Decisions</span>
+                </a>
+
+                <a href="/failure-intelligence" class="nav-item">
+                    <span class="nav-icon">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </span>
+
+                    <span>Failure Intelligence</span>
+                </a>
+
+                <a href="/recovery-simulator" class="nav-item">
+                    <span class="nav-icon">
+                        <i class="fa-solid fa-flask"></i>
+                    </span>
+
+                    <span>Recovery Simulator</span>
+                </a>
+
+                <a href="/model-intelligence" class="nav-item">
+                    <span class="nav-icon">
+                        <i class="fa-solid fa-brain"></i>
+                    </span>
+
+                    <span>Model Intelligence</span>
+                </a>
+
+            </div>
+
+
+            <!-- Governance -->
+
+            <div class="nav-section">
+
+                <div class="nav-section-title">
+                    GOVERNANCE
+                </div>
+
+                <a href="/audit-trail" class="nav-item">
+                    <span class="nav-icon">
+                        <i class="fa-regular fa-rectangle-list"></i>
+                    </span>
+
+                    <span>Audit Trail</span>
+                </a>
+
+                <a href="/policies" class="nav-item">
+                    <span class="nav-icon">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                    </span>
+
+                    <span>Policies</span>
+                </a>
+
+            </div>
+
+        </nav>
+
+
+        <!-- Bottom status -->
+
+        <div class="sidebar-bottom">
+
+            <div class="system-status-card">
+
+                <div class="status-row">
+
+                    <span class="status-dot"></span>
+
+                    <span class="status-title">
+                        Test Mode
+                    </span>
+
+                </div>
+
+                <div class="status-message">
+                    System Healthy
+                </div>
+
+            </div>
+
+
+            <div class="sidebar-tagline">
+                Recover More.<br>
+                Grow Further.
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =========================================================
+         MAIN APPLICATION
+    ========================================================== -->
+
+    <main class="main-content">
+
+        <!-- Topbar -->
+
+        <header class="topbar">
+
+            <div class="search-container">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input
+                    type="text"
+                    placeholder="Search transactions, customers, or decisions..."
+                >
+
+            </div>
+
+
+            <div class="topbar-actions">
+
+                <button class="date-selector">
+
+                    <i class="fa-regular fa-calendar"></i>
+
+                    <span>Last 24 hours</span>
+
+                    <i class="fa-solid fa-chevron-down"></i>
+
+                </button>
+
+
+                <button class="notification-button">
+
+                    <i class="fa-regular fa-bell"></i>
+
+                    <span class="notification-dot"></span>
+
+                </button>
+
+
+                <button class="profile-button">
+
+                    <span class="profile-avatar">
+                        A
+                    </span>
+
+                    <span class="profile-name">
+                        Admin
+                    </span>
+
+                    <i class="fa-solid fa-chevron-down"></i>
+
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- Page -->
+
+        <section class="page-container">
+
+            {% block content %}
+            {% endblock %}
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script
+    src="{{ url_for('static', filename='js/app.js') }}"
+></script>
+
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

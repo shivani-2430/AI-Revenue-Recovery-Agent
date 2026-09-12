@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+
+
+{% block extra_css %}
+
+<link
+    rel="stylesheet"
+    href="{{ url_for(
+        'static',
+        filename='css/model-intelligence.css'
+    ) }}"
+>
+
+{% endblock %}
+
+
+{% block content %}
+
+<main class="model-page">
+
+    <!-- =========================================================
+         HEADER
+    ========================================================== -->
+
+    <section class="model-header">
+
+        <div>
+
+            <div class="model-eyebrow">
+                MODEL INTELLIGENCE
+            </div>
+
+            <h1>
+                Recovery Model
+            </h1>
+
+            <p>
+                Understand how RecoverAI predicts payment
+                recovery potential and evaluates model reliability.
+            </p>
+
+        </div>
+
+
+        <div class="model-status">
+
+            <span></span>
+
+            MODEL ACTIVE
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         MODEL OVERVIEW
+    ========================================================== -->
+
+    <section class="model-overview-card">
+
+        <div class="model-overview-main">
+
+            <div class="model-icon">
+
+                <i class="fa-solid fa-brain"></i>
+
+            </div>
+
+
+            <div>
+
+                <div class="model-label">
+                    ACTIVE MODEL
+                </div>
+
+                <h2 id="modelName">
+                    Loading...
+                </h2>
+
+                <p id="modelDescription">
+                    Loading model information...
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="model-meta">
+
+            <div>
+
+                <span>
+                    Version
+                </span>
+
+                <strong id="modelVersion">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span>
+                    Prediction Target
+                </span>
+
+                <strong id="predictionTarget">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span>
+                    Dataset
+                </span>
+
+                <strong id="trainingDataset">
+                    -
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         MODEL PERFORMANCE
+    ========================================================== -->
+
+    <section class="section-block">
+
+        <div class="section-heading">
+
+            <div>
+
+                <h2>
+                    Model Performance
+                </h2>
+
+                <p>
+                    Evaluation metrics from the trained recovery model.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="metrics-grid">
+
+            <div class="metric-card">
+
+                <span>
+                    Precision
+                </span>
+
+                <strong id="precision">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <span>
+                    Recall
+                </span>
+
+                <strong id="recall">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <span>
+                    F1 Score
+                </span>
+
+                <strong id="f1Score">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <span>
+                    ROC-AUC
+                </span>
+
+                <strong id="rocAuc">
+                    -
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         FEATURES + CLASS DISTRIBUTION
+    ========================================================== -->
+
+    <section class="model-grid">
+
+
+        <!-- FEATURES -->
+
+        <div class="model-card">
+
+            <div class="card-heading">
+
+                <div>
+
+                    <h2>
+                        Features Used
+                    </h2>
+
+                    <p>
+                        Signals used by the model for recovery prediction.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="featureList"
+                class="feature-list"
+            >
+
+                <div class="loading">
+                    Loading features...
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- CLASS DISTRIBUTION -->
+
+        <div class="model-card">
+
+            <div class="card-heading">
+
+                <div>
+
+                    <h2>
+                        Class Distribution
+                    </h2>
+
+                    <p>
+                        Recovery outcome distribution in the dataset.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="classDistribution"
+                class="class-distribution"
+            >
+
+                <div class="loading">
+                    Loading distribution...
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         CONFUSION MATRIX + FEATURE IMPORTANCE
+    ========================================================== -->
+
+    <section class="model-grid">
+
+
+        <!-- CONFUSION MATRIX -->
+
+        <div class="model-card">
+
+            <div class="card-heading">
+
+                <div>
+
+                    <h2>
+                        Confusion Matrix
+                    </h2>
+
+                    <p>
+                        Actual versus predicted recovery outcomes.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="confusionMatrix"
+                class="confusion-matrix"
+            >
+
+                <div class="loading">
+                    Loading matrix...
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- FEATURE IMPORTANCE -->
+
+        <div class="model-card">
+
+            <div class="card-heading">
+
+                <div>
+
+                    <h2>
+                        Feature Importance
+                    </h2>
+
+                    <p>
+                        Relative contribution of model features.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="featureImportance"
+                class="importance-list"
+            >
+
+                <div class="loading">
+                    Loading importance...
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         RECOVERY DECISION POLICY
+    ========================================================== -->
+
+    <section class="policy-card">
+
+        <div class="policy-icon">
+
+            <i class="fa-solid fa-shield-halved"></i>
+
+        </div>
+
+
+        <div>
+
+            <div class="policy-label">
+                RECOVERY DECISION POLICY
+            </div>
+
+            <h2 id="thresholdTitle">
+                Loading...
+            </h2>
+
+            <p id="thresholdDescription">
+                Loading threshold policy...
+            </p>
+
+        </div>
+
+    </section>
+
+</main>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/model-intelligence.js'
+    ) }}"
+></script>
+
+{% endblock %}
