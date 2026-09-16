@@ -81,13 +81,11 @@ RecoverAI | Revenue Recovery Command Center
                 </div>
 
                 <div class="kpi-value">
-                    ₹18.42L
+                    --
                 </div>
 
-                <div class="kpi-change positive">
-                    <i class="fa-solid fa-arrow-up"></i>
-                    12.4%
-                    <span>vs. previous day</span>
+                <div class="kpi-change">
+                    <span>Live API data</span>
                 </div>
 
             </div>
@@ -112,13 +110,11 @@ RecoverAI | Revenue Recovery Command Center
                 </div>
 
                 <div class="kpi-value">
-                    ₹11.67L
+                    --
                 </div>
 
-                <div class="kpi-change positive">
-                    <i class="fa-solid fa-arrow-up"></i>
-                    8.7%
-                    <span>vs. previous day</span>
+                <div class="kpi-change">
+                    <span>Live API data</span>
                 </div>
 
             </div>
@@ -126,7 +122,7 @@ RecoverAI | Revenue Recovery Command Center
         </div>
 
 
-        <!-- Recovered -->
+        <!-- Recovered Revenue -->
 
         <div class="kpi-card">
 
@@ -143,13 +139,11 @@ RecoverAI | Revenue Recovery Command Center
                 </div>
 
                 <div class="kpi-value">
-                    ₹6.94L
+                    --
                 </div>
 
-                <div class="kpi-change positive">
-                    <i class="fa-solid fa-arrow-up"></i>
-                    14.2%
-                    <span>vs. previous day</span>
+                <div class="kpi-change">
+                    <span>Live API data</span>
                 </div>
 
             </div>
@@ -174,13 +168,11 @@ RecoverAI | Revenue Recovery Command Center
                 </div>
 
                 <div class="kpi-value">
-                    37.7%
+                    --
                 </div>
 
-                <div class="kpi-change positive">
-                    <i class="fa-solid fa-arrow-up"></i>
-                    5.3%
-                    <span>vs. previous day</span>
+                <div class="kpi-change">
+                    <span>Live API data</span>
                 </div>
 
             </div>
@@ -215,7 +207,10 @@ RecoverAI | Revenue Recovery Command Center
 
                 </div>
 
-                <button class="view-details">
+                <button
+                    type="button"
+                    class="view-details"
+                >
                     View Details
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
@@ -227,27 +222,27 @@ RecoverAI | Revenue Recovery Command Center
 
                 <div class="funnel-stage stage-one">
                     <span>Failed Payments</span>
-                    <strong>4,821</strong>
+                    <strong>--</strong>
                 </div>
 
                 <div class="funnel-stage stage-two">
                     <span>Revenue at Risk</span>
-                    <strong>₹18.42L</strong>
+                    <strong>--</strong>
                 </div>
 
                 <div class="funnel-stage stage-three">
                     <span>AI Eligible</span>
-                    <strong>3,102</strong>
+                    <strong>--</strong>
                 </div>
 
                 <div class="funnel-stage stage-four">
                     <span>Recovery Actions</span>
-                    <strong>2,641</strong>
+                    <strong>--</strong>
                 </div>
 
                 <div class="funnel-stage stage-five">
                     <span>Successfully Recovered</span>
-                    <strong>1,824 | ₹6.94L</strong>
+                    <strong>--</strong>
                 </div>
 
             </div>
@@ -276,15 +271,15 @@ RecoverAI | Revenue Recovery Command Center
 
                 <select class="chart-selector">
 
-                    <option>
+                    <option value="risk">
                         Revenue at Risk
                     </option>
 
-                    <option>
+                    <option value="expected">
                         Expected Recovery
                     </option>
 
-                    <option>
+                    <option value="recovered">
                         Recovered Revenue
                     </option>
 
@@ -319,96 +314,14 @@ RecoverAI | Revenue Recovery Command Center
                     <svg
                         class="trend-svg"
                         viewBox="0 0 700 230"
-                        preserveAspectRatio="none"
-                    >
-
-                        <defs>
-
-                            <linearGradient
-                                id="areaGradient"
-                                x1="0"
-                                y1="0"
-                                x2="0"
-                                y2="1"
-                            >
-
-                                <stop
-                                    offset="0%"
-                                    stop-color="#4F46E5"
-                                    stop-opacity="0.18"
-                                />
-
-                                <stop
-                                    offset="100%"
-                                    stop-color="#4F46E5"
-                                    stop-opacity="0"
-                                />
-
-                            </linearGradient>
-
-                        </defs>
-
-
-                        <path
-                            d="M0 175
-                               C75 168 85 145 150 142
-                               C210 138 235 105 290 98
-                               C350 90 380 112 430 104
-                               C500 95 530 66 570 55
-                               C620 43 650 58 700 38
-                               L700 230
-                               L0 230 Z"
-                            fill="url(#areaGradient)"
-                        />
-
-
-                        <path
-                            d="M0 175
-                               C75 168 85 145 150 142
-                               C210 138 235 105 290 98
-                               C350 90 380 112 430 104
-                               C500 95 530 66 570 55
-                               C620 43 650 58 700 38"
-                            fill="none"
-                            stroke="#4F46E5"
-                            stroke-width="3"
-                        />
-
-
-                        <circle cx="0" cy="175" r="5"/>
-                        <circle cx="150" cy="142" r="5"/>
-                        <circle cx="290" cy="98" r="5"/>
-                        <circle cx="430" cy="104" r="5"/>
-                        <circle cx="570" cy="55" r="5"/>
-                        <circle cx="700" cy="38" r="5"/>
-
+                        preserveAspectRatio="none">
                     </svg>
 
 
-                    <div class="chart-labels">
-
-                        <span>Dec 2</span>
-                        <span>Dec 3</span>
-                        <span>Dec 4</span>
-                        <span>Dec 5</span>
-                        <span>Dec 6</span>
-                        <span>Dec 7</span>
-                        <span>Dec 8</span>
-
-                    </div>
+                    <div class="chart-labels"></div>
 
 
-                    <div class="chart-tooltip">
-
-                        <strong>
-                            ₹18.4L
-                        </strong>
-
-                        <span>
-                            Dec 8
-                        </span>
-
-                    </div>
+                    <div class="chart-tooltip"></div>
 
                 </div>
 
@@ -440,7 +353,10 @@ RecoverAI | Revenue Recovery Command Center
 
                 </div>
 
-                <button class="view-details">
+                <button
+                    type="button"
+                    class="view-details"
+                >
                     View All
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
@@ -451,9 +367,11 @@ RecoverAI | Revenue Recovery Command Center
             <div class="failure-table">
 
                 <div class="table-heading">
+
                     <span>Failure Reason</span>
                     <span>Volume</span>
                     <span>Revenue at Risk</span>
+
                 </div>
 
 
@@ -464,9 +382,9 @@ RecoverAI | Revenue Recovery Command Center
                         Network Error
                     </span>
 
-                    <span>32.4%</span>
+                    <span>--</span>
 
-                    <strong>₹4.82L</strong>
+                    <strong>--</strong>
 
                 </div>
 
@@ -478,9 +396,9 @@ RecoverAI | Revenue Recovery Command Center
                         Bank Decline
                     </span>
 
-                    <span>26.7%</span>
+                    <span>--</span>
 
-                    <strong>₹3.91L</strong>
+                    <strong>--</strong>
 
                 </div>
 
@@ -492,9 +410,9 @@ RecoverAI | Revenue Recovery Command Center
                         Insufficient Funds
                     </span>
 
-                    <span>18.3%</span>
+                    <span>--</span>
 
-                    <strong>₹3.27L</strong>
+                    <strong>--</strong>
 
                 </div>
 
@@ -506,9 +424,9 @@ RecoverAI | Revenue Recovery Command Center
                         Authentication Failed
                     </span>
 
-                    <span>11.6%</span>
+                    <span>--</span>
 
-                    <strong>₹2.04L</strong>
+                    <strong>--</strong>
 
                 </div>
 
@@ -520,9 +438,9 @@ RecoverAI | Revenue Recovery Command Center
                         Gateway Timeout
                     </span>
 
-                    <span>6.9%</span>
+                    <span>--</span>
 
-                    <strong>₹1.31L</strong>
+                    <strong>--</strong>
 
                 </div>
 
@@ -534,9 +452,9 @@ RecoverAI | Revenue Recovery Command Center
                         Other
                     </span>
 
-                    <span>4.1%</span>
+                    <span>--</span>
 
-                    <strong>₹0.72L</strong>
+                    <strong>--</strong>
 
                 </div>
 
@@ -555,7 +473,10 @@ RecoverAI | Revenue Recovery Command Center
                     Recent AI Recovery Decisions
                 </h2>
 
-                <button class="view-details">
+                <button
+                    type="button"
+                    class="view-details"
+                >
                     View All
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
@@ -571,21 +492,21 @@ RecoverAI | Revenue Recovery Command Center
                     <div>
 
                         <strong>
-                            TXN_0001842
+                            --
                         </strong>
 
                         <span>
-                            ₹24,500 · Network Error
+                            --
                         </span>
 
                     </div>
 
                     <span class="decision-status recoverable">
-                        RECOVERABLE
+                        --
                     </span>
 
                     <strong class="decision-score">
-                        87%
+                        --
                     </strong>
 
                 </div>
@@ -596,21 +517,21 @@ RecoverAI | Revenue Recovery Command Center
                     <div>
 
                         <strong>
-                            TXN_0001839
+                            --
                         </strong>
 
                         <span>
-                            ₹12,300 · Bank Decline
+                            --
                         </span>
 
                     </div>
 
                     <span class="decision-status recoverable">
-                        RECOVERABLE
+                        --
                     </span>
 
                     <strong class="decision-score">
-                        76%
+                        --
                     </strong>
 
                 </div>
@@ -621,21 +542,21 @@ RecoverAI | Revenue Recovery Command Center
                     <div>
 
                         <strong>
-                            TXN_0001832
+                            --
                         </strong>
 
                         <span>
-                            ₹8,450 · Insufficient Funds
+                            --
                         </span>
 
                     </div>
 
                     <span class="decision-status escalate">
-                        ESCALATE
+                        --
                     </span>
 
                     <strong class="decision-score">
-                        62%
+                        --
                     </strong>
 
                 </div>
@@ -646,21 +567,21 @@ RecoverAI | Revenue Recovery Command Center
                     <div>
 
                         <strong>
-                            TXN_0001828
+                            --
                         </strong>
 
                         <span>
-                            ₹49,200 · Authentication Failed
+                            --
                         </span>
 
                     </div>
 
                     <span class="decision-status recoverable">
-                        RECOVERABLE
+                        --
                     </span>
 
                     <strong class="decision-score">
-                        71%
+                        --
                     </strong>
 
                 </div>
@@ -671,24 +592,25 @@ RecoverAI | Revenue Recovery Command Center
                     <div>
 
                         <strong>
-                            TXN_0001821
+                            --
                         </strong>
 
                         <span>
-                            ₹5,780 · Gateway Timeout
+                            --
                         </span>
 
                     </div>
 
                     <span class="decision-status stopped">
-                        STOP
+                        --
                     </span>
 
                     <strong class="decision-score">
-                        28%
+                        --
                     </strong>
 
                 </div>
+
 
             </div>
 
@@ -715,21 +637,20 @@ RecoverAI | Revenue Recovery Command Center
                 <div class="ai-insight-divider"></div>
 
 
-                <h3>
-                    Network errors show the highest
-                    recovery opportunity today.
+                <h3 id="ai-insight-heading">
+                    Loading AI insight...
                 </h3>
 
 
-                <p>
-                    32.4% of failed payments are due to
-                    network errors with an 82% recovery
-                    likelihood. Prioritize smart retries
-                    for this segment.
+                <p id="ai-insight-description">
+                    Analyzing current payment failure patterns...
                 </p>
 
 
-                <button class="recommendation-button">
+                <button
+                    type="button"
+                    class="recommendation-button"
+                >
 
                     View Recommendation
 
@@ -741,9 +662,11 @@ RecoverAI | Revenue Recovery Command Center
 
         </div>
 
+
     </div>
 
 </div>
+
 
 {% endblock %}
 

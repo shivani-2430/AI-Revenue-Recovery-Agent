@@ -2,6 +2,21 @@ from datetime import datetime, timedelta
 
 
 def get_transaction_details(transaction_id):
+
+    original_transaction_id = str(transaction_id)
+
+    # Convert transaction IDs such as TXN_00008727
+    # into the numeric value used by the mock generator.
+    if original_transaction_id.startswith("TXN_"):
+        numeric_transaction_id = int(
+            original_transaction_id.split("_")[-1]
+        )
+    else:
+        numeric_transaction_id = int(
+            original_transaction_id
+        )
+
+    transaction_id = numeric_transaction_id
     """
     Temporary frontend data provider.
 
@@ -10,7 +25,7 @@ def get_transaction_details(transaction_id):
     transaction retrieval without changing the frontend.
     """
 
-    transaction_id = int(transaction_id)
+
 
     payment_methods = [
         "UPI",
@@ -433,7 +448,7 @@ def get_transaction_details(transaction_id):
         "id": transaction_id,
 
         "transaction_id":
-            f"TXN_{transaction_id:07d}",
+            original_transaction_id,
 
         "amount":
             amount,

@@ -16,6 +16,11 @@ class RecoveryAction(db.Model):
         nullable=False,
         index=True
     )
+    payment_link_id = db.Column(
+        db.String(100),
+        nullable=True,
+        index=True
+    )
 
     action_type = db.Column(
         db.String(100),

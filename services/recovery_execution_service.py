@@ -44,7 +44,6 @@ def execute_recovery(recovery_action_id):
     )
 
     if existing_outcome:
-
         return {
             "success": True,
             "duplicate": True,
@@ -165,6 +164,11 @@ def execute_recovery(recovery_action_id):
         }
 
     payment_link = result["payment_link"]
+
+    # Store the Razorpay Payment Link ID so that
+    # payment_link.paid webhooks can be mapped back
+    # to this exact RecoverAI recovery action.
+    action.payment_link_id = payment_link.get("id")
 
     action.status = "EXECUTED"
     action.executed_at = datetime.utcnow()

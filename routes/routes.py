@@ -104,6 +104,15 @@ def register_routes(app):
 		)
 
 		recovery_actions = RecoveryAction.query.count()
+		ai_eligible = (
+    		Transaction.query
+    		.filter(
+        		func.upper(Transaction.status) == "FAILED",
+        		Transaction.retry_count < 3,
+        		Transaction.customer_id.isnot(None),
+    		)
+    		.count()
+		)
 
 		approved_actions = (
 			RecoveryAction.query
@@ -119,11 +128,7 @@ def register_routes(app):
 
 		blocked_actions = (
 			RecoveryAction.query
-			.filter(
-				RecoveryAction.status.in_(
-					["BLOCKED", "STOPPED"]
-				)
-			)
+			.filter_by(status="BLOCKED")
 			.count()
 		)
 
@@ -160,6 +165,16 @@ def register_routes(app):
 			.scalar()
 		)
 
+		successful_recoveries = (
+			db.session.query(
+				func.count(RecoveryOutcome.id)
+			)
+			.filter(
+				RecoveryOutcome.outcome == "SUCCESS"
+			)
+			.scalar()
+		)
+
 		expected_recovery = (
 			db.session.query(
 				func.coalesce(
@@ -175,10 +190,10 @@ def register_routes(app):
 
 		recovery_rate = (
 			(
-				successful_transactions
-				/ failed_transactions
+				float(recovered_revenue or 0)
+				/ float(revenue_at_risk or 0)
 			) * 100
-			if failed_transactions
+			if revenue_at_risk
 			else 0
 		)
 
@@ -238,12 +253,9 @@ def register_routes(app):
 						float(revenue_at_risk or 0),
 						2
 					),
-					"ai_eligible": (
-						approved_actions
-						+ escalated_actions
-					),
+					"ai_eligible": ai_eligible,
 					"recovery_actions": recovery_actions,
-					"successfully_recovered": successful_transactions
+					"successfully_recovered": successful_recoveries,
 				},
 				"actions": {
 					"approved": approved_actions,
@@ -272,8 +284,13 @@ def register_routes(app):
 							action.transaction.amount or 0
 						),
 						"failure_reason": (
-							action.transaction.failure_reason
-							or "UNKNOWN"
+							"RECOVERED"
+							if action.status == "EXECUTED"
+							and action.transaction.status == "SUCCESS"
+							else (
+								action.transaction.failure_reason
+								or "UNKNOWN"
+							)
 						),
 						"status": action.status,
 						"recovery_probability": round(
@@ -297,97 +314,143 @@ def register_routes(app):
 			"risk"
 		).lower()
 
-		rows = (
-			db.session.query(
-				func.date(
-					Transaction.transaction_timestamp
-				).label("date"),
-				func.sum(
-					Transaction.amount
-				).label("amount")
-			)
-			.filter(
-				func.upper(Transaction.status) == "FAILED"
-			)
-			.group_by(
-				func.date(
-					Transaction.transaction_timestamp
-				)
-			)
-			.order_by(
-				func.date(
-					Transaction.transaction_timestamp
-				)
-			)
-			.limit(30)
-			.all()
-		)
-
 		data = []
 
-		for date_value, amount in rows:
+		# -----------------------------------------------------
+		# RISK TREND
+		# -----------------------------------------------------
+		if metric == "risk":
 
-			value = float(
-				amount or 0
+			rows = (
+				db.session.query(
+					func.date(
+						Transaction.transaction_timestamp
+					).label("date"),
+					func.sum(
+						Transaction.amount
+					).label("amount")
+				)
+				.filter(
+					func.upper(
+						Transaction.status
+					) == "FAILED"
+				)
+				.group_by(
+					func.date(
+						Transaction.transaction_timestamp
+					)
+				)
+				.order_by(
+					func.date(
+						Transaction.transaction_timestamp
+					).desc()
+				)
+				.limit(30)
+				.all()
 			)
 
-			if metric == "recovered":
+			for date_value, amount in reversed(rows):
 
-				recovered = (
-					db.session.query(
-						func.coalesce(
-							func.sum(
-								RecoveryOutcome.amount_recovered
-							),
-							0
-						)
+				data.append({
+					"date": str(date_value),
+					"value": round(
+						float(amount or 0),
+						2
 					)
-					.filter(
-						RecoveryOutcome.outcome == "SUCCESS"
+				})
+
+		# -----------------------------------------------------
+		# RECOVERED TREND
+		# -----------------------------------------------------
+		elif metric == "recovered":
+
+			rows = (
+				db.session.query(
+					func.date(
+						RecoveryOutcome.completed_at
+					).label("date"),
+					func.sum(
+						RecoveryOutcome.amount_recovered
+					).label("amount")
+				)
+				.filter(
+					RecoveryOutcome.outcome == "SUCCESS"
+				)
+				.group_by(
+					func.date(
+						RecoveryOutcome.completed_at
 					)
-					.filter(
-						func.date(
-							RecoveryOutcome.completed_at
-						) == date_value
+				)
+				.order_by(
+					func.date(
+						RecoveryOutcome.completed_at
+					).desc()
+				)
+				.limit(30)
+				.all()
+			)
+
+			for date_value, amount in reversed(rows):
+
+				data.append({
+					"date": str(date_value),
+					"value": round(
+						float(amount or 0),
+						2
 					)
-					.scalar()
+				})
+
+		# -----------------------------------------------------
+		# EXPECTED RECOVERY TREND
+		# -----------------------------------------------------
+		elif metric == "expected":
+
+			rows = (
+				db.session.query(
+					func.date(
+						RecoveryAction.created_at
+					).label("date"),
+					func.sum(
+						RecoveryAction.revenue_at_risk
+						* RecoveryAction.recovery_probability
+					).label("amount")
 				)
-
-				value = float(
-					recovered or 0
-				)
-
-			elif metric == "expected":
-
-				expected = (
-					db.session.query(
-						func.coalesce(
-							func.sum(
-								RecoveryAction.revenue_at_risk
-								* RecoveryAction.recovery_probability
-							),
-							0
-						)
+				.group_by(
+					func.date(
+						RecoveryAction.created_at
 					)
-					.filter(
-						func.date(
-							RecoveryAction.created_at
-						) == date_value
+				)
+				.order_by(
+					func.date(
+						RecoveryAction.created_at
+					).desc()
+				)
+				.limit(30)
+				.all()
+			)
+
+			for date_value, amount in reversed(rows):
+
+				data.append({
+					"date": str(date_value),
+					"value": round(
+						float(amount or 0),
+						2
 					)
-					.scalar()
-				)
+				})
 
-				value = float(
-					expected or 0
-				)
+		# -----------------------------------------------------
+		# INVALID METRIC
+		# -----------------------------------------------------
+		else:
 
-			data.append({
-				"date": str(date_value),
-				"value": round(
-					value,
-					2
+			return jsonify({
+				"success": False,
+				"error": (
+					"Invalid metric. "
+					"Use risk, recovered, or expected."
 				)
-			})
+			}), 400
 
 		return jsonify({
 			"success": True,
@@ -416,7 +479,7 @@ def register_routes(app):
 	# =========================================================
 
 	@app.route(
-		"/transactions/<int:transaction_id>"
+		"/transactions/<transaction_id>"
 	)
 	def transaction_details(
 		transaction_id
@@ -434,7 +497,7 @@ def register_routes(app):
 	# =========================================================
 
 	@app.route(
-		"/api/transactions/<int:transaction_id>",
+		"/api/transactions/<transaction_id>",
 		methods=["GET"]
 	)
 	def get_transaction(

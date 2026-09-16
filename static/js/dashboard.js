@@ -111,6 +111,10 @@
                 data.failure_reasons || []
             );
 
+            updateAIInsight(
+                data.failure_reasons || []
+            );
+
             updateRecentDecisions(
                 data.recent_decisions || []
             );
@@ -187,6 +191,97 @@
     };
 
 
+    const updateAIInsight = (failureReasons) => {
+
+        const heading =
+            document.querySelector(
+                "#ai-insight-heading"
+            );
+
+        const description =
+            document.querySelector(
+                "#ai-insight-description"
+            );
+
+        if (!heading || !description) {
+            return;
+        }
+
+        if (
+            !failureReasons ||
+            !failureReasons.length
+        ) {
+            heading.textContent =
+                "No failure pattern detected yet.";
+
+            description.textContent =
+                "AI insight will appear when failure data is available.";
+
+            return;
+        }
+
+        const topReason =
+            [...failureReasons].sort(
+                (a, b) =>
+                    Number(
+                        b.revenue_at_risk || 0
+                    ) -
+                    Number(
+                        a.revenue_at_risk || 0
+                    )
+            )[0];
+
+        const totalVolume =
+            failureReasons.reduce(
+                (total, item) =>
+                    total +
+                    Number(
+                        item.volume || 0
+                    ),
+                0
+            );
+
+        const volume =
+            Number(
+                topReason.volume || 0
+            );
+
+        const revenueAtRisk =
+            Number(
+                topReason.revenue_at_risk || 0
+            );
+
+        const failureShare =
+            totalVolume > 0
+                ? (
+                    volume /
+                    totalVolume
+                ) * 100
+                : 0;
+
+        const reasonName =
+            String(
+                topReason.reason ||
+                "Unknown"
+            ).replaceAll(
+                "_",
+                " "
+            );
+
+        heading.textContent =
+            `${reasonName} shows the highest revenue at risk.`;
+
+        description.textContent =
+            `${volume.toLocaleString(
+                "en-IN"
+            )} recorded failures account for approximately ` +
+            `${failureShare.toFixed(1)}% of the displayed failure volume, ` +
+            `with ${formatCurrency(
+                revenueAtRisk
+            )} at risk. Prioritize recovery actions for this segment.`;
+    };
+
+
     const updateRecentDecisions = (items) => {
 
         const rows =
@@ -241,7 +336,12 @@
                         item.status || ""
                     ).toUpperCase();
 
-                if (state === "APPROVED") {
+                if (state === "EXECUTED") {
+
+                    status.textContent =
+                        "RECOVERED";
+
+                } else if (state === "APPROVED") {
 
                     status.textContent =
                         "RECOVERABLE";
@@ -319,34 +419,54 @@
 
         const svg =
             document.querySelector(
-                ".revenue-chart"
+                ".trend-svg"
+            );
+
+        const labelsContainer =
+            document.querySelector(
+                ".chart-labels"
+            );
+
+        const tooltip =
+            document.querySelector(
+                ".chart-tooltip"
+            );
+
+        const yAxis =
+            document.querySelector(
+                ".y-axis"
             );
 
         if (!svg) {
             return;
         }
 
-        const oldDynamic =
-            svg.querySelector(
-                ".dynamic-trend"
-            );
+        svg.innerHTML = "";
 
-        if (oldDynamic) {
-            oldDynamic.remove();
+        if (labelsContainer) {
+            labelsContainer.innerHTML = "";
         }
 
-        if (!items.length) {
+        if (tooltip) {
+            tooltip.innerHTML = "";
+        }
+
+        if (yAxis) {
+            yAxis.innerHTML = "";
+        }
+
+        if (!items || !items.length) {
             return;
         }
 
         const width =
-            svg.viewBox.baseVal.width || 800;
+            svg.viewBox.baseVal.width || 700;
 
         const height =
-            svg.viewBox.baseVal.height || 300;
+            svg.viewBox.baseVal.height || 230;
 
-        const paddingX = 45;
-        const paddingY = 35;
+        const paddingX = 35;
+        const paddingY = 25;
 
         const values =
             items.map(
@@ -356,45 +476,42 @@
         const maxValue =
             Math.max(...values, 1);
 
-        const minValue =
-            Math.min(...values, 0);
-
-        const range =
-            Math.max(
-                maxValue - minValue,
-                1
-            );
+        const chartMax =
+            maxValue * 1.15;
 
         const points =
             values.map((value, index) => {
 
                 const x =
-                    paddingX +
-                    (
-                        index /
-                        Math.max(
-                            items.length - 1,
-                            1
-                        )
-                    ) *
-                    (
-                        width -
-                        paddingX * 2
-                    );
+                    items.length === 1
+                        ? width / 2
+                        : paddingX +
+                          (
+                              index /
+                              (items.length - 1)
+                          ) *
+                          (
+                              width -
+                              paddingX * 2
+                          );
 
                 const y =
                     height -
                     paddingY -
                     (
-                        (value - minValue) /
-                        range
+                        value /
+                        chartMax
                     ) *
                     (
                         height -
                         paddingY * 2
                     );
 
-                return `${x},${y}`;
+                return {
+                    x,
+                    y,
+                    value
+                };
             });
 
 
@@ -413,6 +530,39 @@
         );
 
 
+        const areaPoints = [
+            `${points[0].x},${height - paddingY}`,
+            ...points.map(
+                point =>
+                    `${point.x},${point.y}`
+            ),
+            `${points[points.length - 1].x},${height - paddingY}`
+        ];
+
+        const area =
+            document.createElementNS(
+                namespace,
+                "polygon"
+            );
+
+        area.setAttribute(
+            "points",
+            areaPoints.join(" ")
+        );
+
+        area.setAttribute(
+            "fill",
+            "currentColor"
+        );
+
+        area.setAttribute(
+            "opacity",
+            "0.08"
+        );
+
+        group.appendChild(area);
+
+
         const line =
             document.createElementNS(
                 namespace,
@@ -421,7 +571,12 @@
 
         line.setAttribute(
             "points",
-            points.join(" ")
+            points
+                .map(
+                    point =>
+                        `${point.x},${point.y}`
+                )
+                .join(" ")
         );
 
         line.setAttribute(
@@ -452,89 +607,276 @@
         group.appendChild(line);
 
 
-        items.forEach((item, index) => {
+        points.forEach(
+            (point, index) => {
 
-            const value =
-                Number(item.value || 0);
+                const circle =
+                    document.createElementNS(
+                        namespace,
+                        "circle"
+                    );
 
-            const x =
-                paddingX +
-                (
-                    index /
-                    Math.max(
-                        items.length - 1,
-                        1
-                    )
-                ) *
-                (
-                    width -
-                    paddingX * 2
+                circle.setAttribute(
+                    "cx",
+                    point.x
                 );
 
-            const y =
-                height -
-                paddingY -
-                (
-                    (value - minValue) /
-                    range
-                ) *
-                (
-                    height -
-                    paddingY * 2
+                circle.setAttribute(
+                    "cy",
+                    point.y
                 );
 
-            const circle =
-                document.createElementNS(
-                    namespace,
-                    "circle"
+                circle.setAttribute(
+                    "r",
+                    "4"
                 );
 
-            circle.setAttribute(
-                "cx",
-                x
-            );
+                circle.setAttribute(
+                    "fill",
+                    "currentColor"
+                );
 
-            circle.setAttribute(
-                "cy",
-                y
-            );
+                circle.style.cursor =
+                    "pointer";
 
-            circle.setAttribute(
-                "r",
-                "4"
-            );
+                circle.addEventListener(
+                    "mouseenter",
+                    () => {
 
-            circle.setAttribute(
-                "fill",
-                "currentColor"
-            );
+                        if (!tooltip) {
+                            return;
+                        }
 
-            group.appendChild(circle);
-        });
+                        const date =
+                            new Date(
+                                items[index].date
+                            );
+
+                        const formattedDate =
+                            date.toLocaleDateString(
+                                "en-IN",
+                                {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric"
+                                }
+                            );
+
+                        tooltip.innerHTML = `
+                            <strong>
+                                ₹${Number(
+                                    point.value
+                                ).toLocaleString(
+                                    "en-IN",
+                                    {
+                                        maximumFractionDigits: 2
+                                    }
+                                )}
+                            </strong>
+                            <span>
+                                ${formattedDate}
+                            </span>
+                        `;
+
+                        tooltip.style.opacity =
+                            "1";
+                    }
+                );
+
+                circle.addEventListener(
+                    "mouseleave",
+                    () => {
+
+                        if (tooltip) {
+                            tooltip.style.opacity =
+                                "0";
+                        }
+                    }
+                );
+
+                group.appendChild(circle);
+            }
+        );
 
 
         svg.appendChild(group);
 
 
-        const selector =
-            document.querySelector(
-                ".chart-selector"
-            );
+        if (labelsContainer) {
 
-        if (selector) {
+            const labelCount =
+                Math.min(
+                    items.length,
+                    7
+                );
 
-            selector.setAttribute(
-                "aria-label",
-                `Showing ${metric} trend`
+            const step =
+                items.length <= 7
+                    ? 1
+                    : Math.ceil(
+                        (items.length - 1) /
+                        (labelCount - 1)
+                    );
+
+            const indexes = [];
+
+            for (
+                let i = 0;
+                i < items.length;
+                i += step
+            ) {
+                indexes.push(i);
+            }
+
+            if (
+                indexes[
+                    indexes.length - 1
+                ] !== items.length - 1
+            ) {
+                indexes.push(
+                    items.length - 1
+                );
+            }
+
+            indexes.forEach(
+                index => {
+
+                    const date =
+                        new Date(
+                            items[index].date
+                        );
+
+                    const label =
+                        document.createElement(
+                            "span"
+                        );
+
+                    label.textContent =
+                        date.toLocaleDateString(
+                            "en-IN",
+                            {
+                                day: "numeric",
+                                month: "short"
+                            }
+                        );
+
+                    labelsContainer.appendChild(
+                        label
+                    );
+                }
             );
         }
+
+
+        if (yAxis) {
+
+            const axisSteps = 5;
+
+            for (
+                let i = axisSteps;
+                i >= 0;
+                i--
+            ) {
+
+                const label =
+                    document.createElement(
+                        "span"
+                    );
+
+                const value =
+                    (chartMax / axisSteps) *
+                    i;
+
+                if (value >= 100000) {
+
+                    label.textContent =
+                        `₹${(
+                            value / 100000
+                        ).toFixed(1)}L`;
+
+                } else if (
+                    value >= 1000
+                ) {
+
+                    label.textContent =
+                        `₹${(
+                            value / 1000
+                        ).toFixed(1)}K`;
+
+                } else {
+
+                    label.textContent =
+                        `₹${Math.round(
+                            value
+                        )}`;
+                }
+
+                yAxis.appendChild(
+                    label
+                );
+            }
+        }
+
+
+        if (
+            tooltip &&
+            items.length
+        ) {
+
+            const latest =
+                items[
+                    items.length - 1
+                ];
+
+            const latestDate =
+                new Date(
+                    latest.date
+                );
+
+            tooltip.innerHTML = `
+                <strong>
+                    ₹${Number(
+                        latest.value || 0
+                    ).toLocaleString(
+                        "en-IN",
+                        {
+                            maximumFractionDigits: 2
+                        }
+                    )}
+                </strong>
+                <span>
+                    ${latestDate.toLocaleDateString(
+                        "en-IN",
+                        {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric"
+                        }
+                    )}
+                </span>
+            `;
+
+            tooltip.style.opacity =
+                "1";
+        }
+
+
+        svg.setAttribute(
+            "aria-label",
+            `${metric} revenue trend`
+        );
     };
 
+
+    /* =========================================
+       REVENUE TREND SELECTOR
+    ========================================= */
 
     const chartSelector =
         document.querySelector(
             ".chart-selector"
         );
+
 
     if (chartSelector) {
 
@@ -558,10 +900,64 @@
     }
 
 
+    /* =========================================
+       DASHBOARD NAVIGATION
+    ========================================= */
+
+    const viewDetailsButtons =
+        document.querySelectorAll(
+            ".view-details"
+        );
+
+
+    if (viewDetailsButtons.length >= 3) {
+
+        /* Payment Recovery Funnel */
+
+        viewDetailsButtons[0].addEventListener(
+            "click",
+            () => {
+
+                window.location.href =
+                    "/recovery-queue";
+            }
+        );
+
+
+        /* Top Failure Reasons */
+
+        viewDetailsButtons[1].addEventListener(
+            "click",
+            () => {
+
+                window.location.href =
+                    "/transactions";
+            }
+        );
+
+
+        /* Recent AI Recovery Decisions */
+
+        viewDetailsButtons[2].addEventListener(
+            "click",
+            () => {
+
+                window.location.href =
+                    "/ai-decisions";
+            }
+        );
+    }
+
+
+    /* =========================================
+       AI RECOMMENDATION
+    ========================================= */
+
     const recommendationButton =
         document.querySelector(
             ".recommendation-button"
         );
+
 
     if (recommendationButton) {
 
@@ -578,10 +974,12 @@
 
     loadDashboard();
 
+
     setInterval(
         loadDashboard,
         30000
     );
+
 
     setInterval(
         () => {

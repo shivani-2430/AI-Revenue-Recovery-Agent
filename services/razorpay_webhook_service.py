@@ -52,7 +52,8 @@ def _map_status(event):
 
     if event in {
         "payment.captured",
-        "payment.authorized"
+        "payment.authorized",
+        "payment_link.paid"
     }:
         return "SUCCESS"
 
@@ -66,10 +67,15 @@ def _map_status(event):
 
 
 def _update_recovery_outcome(transaction, status, amount):
+
     action = (
         RecoveryAction.query
-        .filter_by(transaction_id=transaction.id)
-        .order_by(RecoveryAction.created_at.desc())
+        .filter_by(
+            transaction_id=transaction.id
+        )
+        .order_by(
+            RecoveryAction.created_at.desc()
+        )
         .first()
     )
 
@@ -85,9 +91,11 @@ def _update_recovery_outcome(transaction, status, amount):
     )
 
     if status == "SUCCESS":
+
         recovered_amount = amount
 
         if not outcome:
+
             outcome = RecoveryOutcome(
                 transaction_id=transaction.id,
                 recovery_action_id=action.id,
@@ -95,8 +103,11 @@ def _update_recovery_outcome(transaction, status, amount):
                 amount_recovered=recovered_amount,
                 completed_at=datetime.utcnow()
             )
+
             db.session.add(outcome)
+
         else:
+
             outcome.outcome = "SUCCESS"
             outcome.amount_recovered = recovered_amount
             outcome.completed_at = datetime.utcnow()
@@ -126,11 +137,15 @@ def _update_recovery_outcome(transaction, status, amount):
         }
 
     if status == "FAILED":
+
         if outcome:
+
             outcome.outcome = "FAILED"
             outcome.amount_recovered = 0
             outcome.completed_at = datetime.utcnow()
+
         else:
+
             outcome = RecoveryOutcome(
                 transaction_id=transaction.id,
                 recovery_action_id=action.id,
@@ -138,6 +153,7 @@ def _update_recovery_outcome(transaction, status, amount):
                 amount_recovered=0,
                 completed_at=datetime.utcnow()
             )
+
             db.session.add(outcome)
 
         action.status = "RECOVERY_FAILED"
@@ -168,17 +184,42 @@ def _update_recovery_outcome(transaction, status, amount):
 
 
 def process_webhook(payload):
+
     event = payload.get(
         "event",
         "unknown"
     )
 
-    payment = _get_payment_payload(
-        payload
+    payment = _get_payment_payload(payload)
+
+    razorpay_payment_id = payment.get("id")
+
+    # ---------------------------------------------------------
+    # Extract Razorpay Payment Link information
+    # ---------------------------------------------------------
+
+    payment_link = (
+        payload.get("payload", {})
+        .get("payment_link", {})
+        .get("entity", {})
     )
 
-    razorpay_payment_id = payment.get(
-        "id"
+    payment_link_id = payment_link.get("id")
+
+    payment_link_notes = (
+        payment_link.get("notes") or {}
+    )
+
+    recovery_action_id = (
+        payment_link_notes.get(
+            "recovery_action_id"
+        )
+    )
+
+    transaction_id_from_notes = (
+        payment_link_notes.get(
+            "transaction_id"
+        )
     )
 
     if not razorpay_payment_id:
@@ -197,7 +238,12 @@ def process_webhook(payload):
         }
 
     amount = (
-        float(payment.get("amount", 0))
+        float(
+            payment.get(
+                "amount",
+                0
+            )
+        )
         / 100
     )
 
@@ -212,9 +258,10 @@ def process_webhook(payload):
         "error_description"
     )
 
-    notes = payment.get(
-        "notes"
-    ) or {}
+    notes = (
+        payment.get("notes")
+        or {}
+    )
 
     customer_id_value = (
         notes.get("customer_id")
@@ -228,6 +275,10 @@ def process_webhook(payload):
         or "GENERAL"
     )
 
+    # ---------------------------------------------------------
+    # Find or create customer
+    # ---------------------------------------------------------
+
     customer = (
         Customer.query
         .filter_by(
@@ -239,6 +290,7 @@ def process_webhook(payload):
     )
 
     if not customer:
+
         customer = Customer(
             customer_id=str(
                 customer_id_value
@@ -254,49 +306,96 @@ def process_webhook(payload):
         db.session.add(customer)
         db.session.flush()
 
-    transaction = (
-        Transaction.query
-        .filter_by(
-            transaction_id=razorpay_payment_id
-        )
-        .first()
-    )
+    # ---------------------------------------------------------
+    # RecoverAI recovery mapping
+    #
+    # Priority:
+    # 1. recovery_action_id from Razorpay notes
+    # 2. payment_link_id stored in RecoveryAction
+    # 3. transaction_id from Razorpay notes
+    # ---------------------------------------------------------
 
-    is_new_transaction = transaction is None
+    action = None
+
+    # 1. Try RecoveryAction ID from Payment Link notes
+    if recovery_action_id:
+
+        try:
+
+            action = RecoveryAction.query.get(
+                int(recovery_action_id)
+            )
+
+        except (TypeError, ValueError):
+
+            action = None
+
+    # 2. Try Payment Link ID
+    #
+    # This is especially important for Payment Links
+    # that do not contain RecoverAI notes.
+    if not action and payment_link_id:
+
+        action = (
+            RecoveryAction.query
+            .filter_by(
+                payment_link_id=payment_link_id
+            )
+            .first()
+        )
+
+    transaction = None
+
+    # If RecoveryAction was found,
+    # use its original transaction.
+    if action:
+
+        transaction = Transaction.query.get(
+            action.transaction_id
+        )
+
+    # 3. Fallback to transaction_id from notes
+    if (
+        not transaction
+        and transaction_id_from_notes
+    ):
+
+        transaction = (
+            Transaction.query
+            .filter_by(
+                transaction_id=str(
+                    transaction_id_from_notes
+                )
+            )
+            .first()
+        )
 
     if not transaction:
-        transaction = Transaction(
-            transaction_id=razorpay_payment_id,
-            customer_id=customer.id,
-            amount=amount,
-            payment_method=method,
-            merchant_category=merchant_category,
-            status=status,
-            failure_reason=error_description,
-            transaction_timestamp=datetime.utcnow(),
-            subscription_status=notes.get(
-                "subscription_status"
-            ),
-            retry_count=0
+
+        raise ValueError(
+            "Unable to map Razorpay payment to an existing "
+            "RecoverAI transaction."
         )
 
-        db.session.add(transaction)
-        db.session.flush()
+    # ---------------------------------------------------------
+    # Update original RecoverAI transaction
+    # ---------------------------------------------------------
 
-    else:
-        previous_status = transaction.status
+    previous_status = transaction.status
 
-        transaction.status = status
-        transaction.failure_reason = (
-            error_description
-        )
-        transaction.payment_method = method
+    transaction.status = status
+    transaction.failure_reason = error_description
+    transaction.payment_method = method
 
-        if (
-            previous_status == "FAILED"
-            and status == "SUCCESS"
-        ):
-            transaction.failure_reason = None
+    if (
+        previous_status == "FAILED"
+        and status == "SUCCESS"
+    ):
+        transaction.failure_reason = None
+
+    # ---------------------------------------------------------
+    # Record payment attempt
+    # ---------------------------------------------------------
 
     latest_attempt = (
         PaymentAttempt.query
@@ -333,19 +432,17 @@ def process_webhook(payload):
         attempt_number - 1
     )
 
-    if is_new_transaction:
-        if status == "SUCCESS":
-            customer.successful_payments = 1
-        elif status == "FAILED":
-            customer.failed_payments = 1
-    else:
-        customer.successful_payments = int(
-            customer.successful_payments or 0
-        )
+    # ---------------------------------------------------------
+    # Update customer statistics
+    # ---------------------------------------------------------
 
-        customer.failed_payments = int(
-            customer.failed_payments or 0
-        )
+    customer.successful_payments = int(
+        customer.successful_payments or 0
+    )
+
+    customer.failed_payments = int(
+        customer.failed_payments or 0
+    )
 
     total_payments = (
         customer.successful_payments
@@ -364,10 +461,16 @@ def process_webhook(payload):
 
     db.session.commit()
 
+    # ---------------------------------------------------------
+    # Process recovery result
+    # ---------------------------------------------------------
+
     recovery_result = None
 
     if status == "FAILED":
+
         try:
+
             from services.recovery_pipeline_service import (
                 process_recovery
             )
@@ -377,6 +480,7 @@ def process_webhook(payload):
             )
 
         except Exception as error:
+
             db.session.rollback()
 
             recovery_result = {
@@ -385,7 +489,9 @@ def process_webhook(payload):
             }
 
     elif status == "SUCCESS":
+
         try:
+
             recovery_result = (
                 _update_recovery_outcome(
                     transaction,
@@ -397,6 +503,7 @@ def process_webhook(payload):
             db.session.commit()
 
         except Exception as error:
+
             db.session.rollback()
 
             recovery_result = {
@@ -408,6 +515,7 @@ def process_webhook(payload):
         "processed": True,
         "event": event,
         "payment_id": razorpay_payment_id,
+        "payment_link_id": payment_link_id,
         "transaction_id": transaction.transaction_id,
         "status": transaction.status,
         "amount": amount,
