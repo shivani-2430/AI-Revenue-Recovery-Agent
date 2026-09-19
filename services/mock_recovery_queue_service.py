@@ -1,73 +1,17 @@
-from pathlib import Path
-import math
+from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
 
-import pandas as pd
+from database.db import db
+from models.transaction import Transaction
 
-
-# ============================================================
-# DATASET PATH
-# ============================================================
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-DATASET_PATH = (
-    BASE_DIR
-    / "ml"
-    / "recovery_dataset.csv"
+from ml.predict_recovery import (
+    predict_recovery_batch,
+    calculate_revenue_at_risk,
 )
 
 
-# ============================================================
-# SAFE HELPERS
-# ============================================================
-
-def _safe_float(value, default=0.0):
-    try:
-        if value is None:
-            return default
-
-        if pd.isna(value):
-            return default
-
-        return float(value)
-
-    except (TypeError, ValueError):
-        return default
-
-
-def _safe_int(value, default=0):
-    try:
-        if value is None:
-            return default
-
-        if pd.isna(value):
-            return default
-
-        return int(float(value))
-
-    except (TypeError, ValueError):
-        return default
-
-
-def _safe_string(value, default=""):
-    if value is None:
-        return default
-
-    try:
-        if pd.isna(value):
-            return default
-    except (TypeError, ValueError):
-        pass
-
-    return str(value)
-
-
-# ============================================================
-# CURRENCY FORMAT
-# ============================================================
-
 def _format_currency(amount):
-    amount = _safe_float(amount)
+    amount = float(amount or 0)
 
     if amount >= 10_000_000:
         return f"₹{amount / 10_000_000:.2f}Cr"
@@ -81,74 +25,11 @@ def _format_currency(amount):
     return f"₹{amount:,.0f}"
 
 
-# ============================================================
-# CUSTOMER LABEL
-# ============================================================
-
-def _customer_label(customer_id):
-    value = _safe_string(
-        customer_id,
-        "CUSTOMER",
-    )
-
-    return value[-8:]
-
-
-# ============================================================
-# NORMALIZE PROBABILITY
-# ============================================================
-
-def _normalize_probability(value):
-    probability = _safe_float(value)
-
-    # Dataset may contain:
-    # 0.87 -> 87
-    # 0.62 -> 62
-    if 0 <= probability <= 1:
-        probability *= 100
-
-    return max(
-        0,
-        min(
-            100,
-            probability,
-        ),
-    )
-
-
-# ============================================================
-# PRIORITY
-# ============================================================
-
-def _priority(
-    probability,
-    amount,
-    retry_count,
-):
-    probability = _normalize_probability(
-        probability
-    )
-
-    amount = max(
-        0,
-        _safe_float(amount),
-    )
-
-    retry_count = max(
-        0,
-        _safe_int(retry_count),
-    )
-
+def _priority(probability, amount, retry_count):
     score = (
         probability * 0.60
-        + min(
-            amount / 100_000,
-            1,
-        ) * 25
-        + max(
-            0,
-            3 - retry_count,
-        ) * 5
+        + min(float(amount) / 100000, 1) * 25
+        + max(0, 3 - retry_count) * 5
     )
 
     if score >= 70:
@@ -160,42 +41,22 @@ def _priority(
     return "LOW"
 
 
-# ============================================================
-# RECOMMENDED ACTION
-# ============================================================
-
-def _recommended_action(
-    row,
-    probability,
-):
-    failure_reason = _safe_string(
-        row.get("failure_reason")
-    ).lower()
-
-    retry_count = _safe_int(
-        row.get("retry_count")
-    )
-
-    probability = _normalize_probability(
-        probability
-    )
+def _recommended_action(failure_reason, probability, retry_count):
+    reason = str(failure_reason or "").lower()
 
     if probability < 35:
         return "STOP"
 
-    if (
-        "network" in failure_reason
-        or "timeout" in failure_reason
-    ):
+    if "network" in reason or "timeout" in reason:
         return "SMART RETRY"
 
-    if "authentication" in failure_reason:
+    if "authentication" in reason:
         return "AUTHENTICATION RETRY"
 
-    if "bank" in failure_reason:
+    if "bank" in reason:
         return "PAYMENT RETRY"
 
-    if "insufficient" in failure_reason:
+    if "insufficient" in reason:
         return "CUSTOMER REMINDER"
 
     if retry_count >= 3:
@@ -204,15 +65,7 @@ def _recommended_action(
     return "SMART RETRY"
 
 
-# ============================================================
-# STATUS
-# ============================================================
-
 def _status(probability):
-    probability = _normalize_probability(
-        probability
-    )
-
     if probability >= 70:
         return "READY"
 
@@ -222,22 +75,7 @@ def _status(probability):
     return "STOPPED"
 
 
-# ============================================================
-# GUARDRAIL
-# ============================================================
-
-def _guardrail(
-    probability,
-    retry_count,
-):
-    probability = _normalize_probability(
-        probability
-    )
-
-    retry_count = _safe_int(
-        retry_count
-    )
-
+def _guardrail(probability, retry_count):
     if probability < 35:
         return "BLOCKED"
 
@@ -247,747 +85,409 @@ def _guardrail(
     return "PASSED"
 
 
-# ============================================================
-# BUILD ONE OPPORTUNITY
-# ============================================================
-
-def _build_opportunity(row):
-
-    probability = _normalize_probability(
-        row.get("recovery_probability")
-    )
-
-    amount = _safe_float(
-        row.get("amount")
-    )
-
-    retry_count = _safe_int(
-        row.get("retry_count")
-    )
-
-    revenue_at_risk = amount
-
-    expected_recovery = (
-        amount
-        * probability
-        / 100
-    )
-
-    priority = _priority(
-        probability,
-        amount,
-        retry_count,
-    )
-
-    recommended_action = (
-        _recommended_action(
-            row,
-            probability,
+def get_recovery_queue(
+    search=None,
+    min_probability=0,
+    max_retries=3,
+    page=1,
+    per_page=10,
+):
+    query = (
+        Transaction.query
+        .options(joinedload(Transaction.customer))
+        .filter(
+            Transaction.status.ilike("FAILED"),
+            Transaction.retry_count < max_retries,
+            Transaction.customer_id.isnot(None),
         )
     )
 
-    guardrail = _guardrail(
-        probability,
-        retry_count,
+    if search:
+        search_term = f"%{search.strip()}%"
+
+        search_filters = [
+            Transaction.transaction_id.ilike(search_term),
+            Transaction.failure_reason.ilike(search_term),
+            Transaction.payment_method.ilike(search_term),
+        ]
+
+        if search.strip().isdigit():
+            search_filters.append(
+                Transaction.customer_id == int(search.strip())
+            )
+
+        query = query.filter(or_(*search_filters))
+
+    transactions = (
+        query
+        .order_by(
+            Transaction.transaction_timestamp.desc()
+        )
+        .all()
     )
 
-    status = _status(
-        probability
-    )
+    # --------------------------------------------------------
+    # Build ML feature rows
+    # --------------------------------------------------------
 
-    return {
-        "transaction_id": _safe_string(
-            row.get("transaction_id"),
-            "UNKNOWN",
-        ),
+    candidates = []
+    feature_rows = []
 
-        "customer_id": _safe_string(
-            row.get("customer_id"),
-            "UNKNOWN",
-        ),
+    for transaction in transactions:
+        customer = transaction.customer
 
-        "customer_label": _customer_label(
-            row.get("customer_id")
-        ),
+        if not customer:
+            continue
 
-        "customer_segment": _safe_string(
-            row.get(
-                "customer_segment"
+        timestamp = transaction.transaction_timestamp
+
+        customer_age_days = max(
+            (
+                timestamp - customer.customer_since
+            ).days,
+            0,
+        )
+
+        high_value_customer = (
+            float(customer.customer_value) >= 100000
+        )
+
+        previous_recovery_success = False
+
+        feature_rows.append({
+            "amount": float(transaction.amount),
+
+            "payment_method": transaction.payment_method,
+
+            "merchant_category": transaction.merchant_category,
+
+            "failure_reason": (
+                transaction.failure_reason
+                or "Unknown"
             ),
-            "STANDARD",
-        ),
 
-        "amount": round(
+            "retry_count": transaction.retry_count,
+
+            "customer_segment": customer.customer_segment,
+
+            "customer_age_days": customer_age_days,
+
+            "successful_payments": customer.successful_payments,
+
+            "failed_payments": customer.failed_payments,
+
+            "historical_success_rate": (
+                customer.historical_success_rate
+            ),
+
+            "customer_value": float(
+                customer.customer_value
+            ),
+
+            "subscription_status": (
+                transaction.subscription_status
+                or "Unknown"
+            ),
+
+            "hour": timestamp.hour,
+
+            "day_of_week": timestamp.weekday(),
+
+            "high_value_customer": high_value_customer,
+
+            "previous_recovery_success": (
+                previous_recovery_success
+            ),
+        })
+
+        candidates.append({
+            "transaction": transaction,
+
+            "customer": customer,
+
+            "timestamp": timestamp,
+
+            "customer_age_days": customer_age_days,
+
+            "high_value_customer": high_value_customer,
+        })
+
+    # --------------------------------------------------------
+    # ONE BATCH ML PREDICTION
+    # --------------------------------------------------------
+
+    predictions = predict_recovery_batch(feature_rows)
+
+    opportunities = []
+
+    for candidate, prediction in zip(
+        candidates,
+        predictions,
+    ):
+        transaction = candidate["transaction"]
+        customer = candidate["customer"]
+        timestamp = candidate["timestamp"]
+
+        probability = prediction["recovery_percentage"]
+
+        if probability < float(min_probability):
+            continue
+
+        amount = float(transaction.amount)
+
+        # ----------------------------------------------------
+        # IMPORTANT MONEY SEMANTICS
+        #
+        # Revenue at risk = full failed transaction amount
+        #
+        # Expected recovery = amount × ML probability
+        # ----------------------------------------------------
+
+        revenue_at_risk = amount
+
+        expected_recovery = calculate_revenue_at_risk(
             amount,
-            2,
-        ),
+            prediction["recovery_probability"],
+        )
 
-        "amount_label": _format_currency(
-            amount
-        ),
-
-        "failure_reason": _safe_string(
-            row.get("failure_reason"),
-            "Unknown",
-        ),
-
-        "payment_method": _safe_string(
-            row.get("payment_method"),
-            "Unknown",
-        ),
-
-        "recovery_probability": round(
+        priority = _priority(
             probability,
-            1,
-        ),
+            amount,
+            transaction.retry_count,
+        )
 
-        "revenue_at_risk": round(
-            revenue_at_risk,
-            2,
-        ),
+        action = _recommended_action(
+            transaction.failure_reason,
+            probability,
+            transaction.retry_count,
+        )
 
-        "revenue_at_risk_label":
-            _format_currency(
+        status = _status(probability)
+
+        guardrail = _guardrail(
+            probability,
+            transaction.retry_count,
+        )
+
+        opportunities.append({
+            "transaction_id": transaction.transaction_id,
+
+            "customer_id": customer.customer_id,
+
+            "customer_label": customer.customer_id,
+
+            "customer_segment": customer.customer_segment,
+
+            "amount": round(amount, 2),
+
+            "amount_label": _format_currency(amount),
+
+            "failure_reason": (
+                transaction.failure_reason
+                or "Unknown"
+            ),
+
+            "payment_method": transaction.payment_method,
+
+            "recovery_probability": round(
+                probability,
+                1,
+            ),
+
+            "revenue_at_risk": round(
+                revenue_at_risk,
+                2,
+            ),
+
+            "revenue_at_risk_label": _format_currency(
                 revenue_at_risk
             ),
 
-        "expected_recovery": round(
-            expected_recovery,
-            2,
-        ),
+            "expected_recovery": round(
+                expected_recovery,
+                2,
+            ),
 
-        "expected_recovery_label":
-            _format_currency(
+            "expected_recovery_label": _format_currency(
                 expected_recovery
             ),
 
-        "priority": priority,
+            "priority": priority,
 
-        "recommended_action":
-            recommended_action,
+            "recommended_action": action,
 
-        "guardrail": guardrail,
+            "guardrail": guardrail,
 
-        "status": status,
+            "status": status,
 
-        "retry_count": retry_count,
+            "retry_count": transaction.retry_count,
 
-        "high_value_customer": bool(
-            row.get(
-                "high_value_customer",
-                False,
-            )
-        ),
-
-        "subscription_status":
-            _safe_string(
-                row.get(
-                    "subscription_status"
-                ),
-                "UNKNOWN",
+            "high_value_customer": (
+                candidate["high_value_customer"]
             ),
 
-        "timestamp": _safe_string(
-            row.get(
-                "transaction_timestamp"
-            )
-        ),
-    }
+            "subscription_status": (
+                transaction.subscription_status
+                or "UNKNOWN"
+            ),
 
-
-# ============================================================
-# MAIN RECOVERY QUEUE
-# ============================================================
-
-def get_recovery_queue(
-    search=None,
-    priority=None,
-    status=None,
-    failure_reason=None,
-    payment_method=None,
-    page=1,
-    per_page=10,
-    sort="opportunity",
-):
+            "timestamp": timestamp.isoformat(),
+        })
 
     # --------------------------------------------------------
-    # VERIFY DATASET
-    # --------------------------------------------------------
-
-    if not DATASET_PATH.exists():
-
-        raise FileNotFoundError(
-            "Recovery dataset was not found.\n"
-            f"Expected location:\n{DATASET_PATH}"
-        )
-
-    # --------------------------------------------------------
-    # LOAD DATASET
-    # --------------------------------------------------------
-
-    dataframe = pd.read_csv(
-        DATASET_PATH
-    )
-
-    if dataframe.empty:
-
-        raise ValueError(
-            "Recovery dataset exists, "
-            "but it contains no records."
-        )
-
-    # --------------------------------------------------------
-    # VERIFY COLUMNS
-    # --------------------------------------------------------
-
-    required_columns = {
-        "transaction_id",
-        "customer_id",
-        "amount",
-        "payment_method",
-        "failure_reason",
-        "status",
-        "recovery_probability",
-    }
-
-    missing_columns = (
-        required_columns
-        - set(dataframe.columns)
-    )
-
-    if missing_columns:
-
-        raise ValueError(
-            "Recovery dataset is missing "
-            "required columns: "
-            + ", ".join(
-                sorted(
-                    missing_columns
-                )
-            )
-        )
-
-    # --------------------------------------------------------
-    # FAILED PAYMENTS
-    # --------------------------------------------------------
-
-    failed = dataframe[
-        dataframe["status"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-        .eq("FAILED")
-    ].copy()
-
-    # --------------------------------------------------------
-    # NORMALIZE RECOVERY PROBABILITY
-    # --------------------------------------------------------
-
-    failed[
-        "recovery_probability"
-    ] = pd.to_numeric(
-        failed[
-            "recovery_probability"
-        ],
-        errors="coerce",
-    ).fillna(0)
-
-    if not failed.empty:
-
-        maximum_probability = (
-            failed[
-                "recovery_probability"
-            ].max()
-        )
-
-        if maximum_probability <= 1:
-
-            failed[
-                "recovery_probability"
-            ] = (
-                failed[
-                    "recovery_probability"
-                ]
-                * 100
-            )
-
-    failed[
-        "recovery_probability"
-    ] = (
-        failed[
-            "recovery_probability"
-        ]
-        .clip(
-            lower=0,
-            upper=100,
-        )
-    )
-
-    # --------------------------------------------------------
-    # SEARCH
-    # --------------------------------------------------------
-
-    if search:
-
-        search_value = (
-            str(search)
-            .strip()
-            .lower()
-        )
-
-        transaction_match = (
-            failed[
-                "transaction_id"
-            ]
-            .astype(str)
-            .str.lower()
-            .str.contains(
-                search_value,
-                na=False,
-            )
-        )
-
-        customer_match = (
-            failed[
-                "customer_id"
-            ]
-            .astype(str)
-            .str.lower()
-            .str.contains(
-                search_value,
-                na=False,
-            )
-        )
-
-        failure_match = (
-            failed[
-                "failure_reason"
-            ]
-            .astype(str)
-            .str.lower()
-            .str.contains(
-                search_value,
-                na=False,
-            )
-        )
-
-        payment_match = (
-            failed[
-                "payment_method"
-            ]
-            .astype(str)
-            .str.lower()
-            .str.contains(
-                search_value,
-                na=False,
-            )
-        )
-
-        failed = failed[
-            transaction_match
-            | customer_match
-            | failure_match
-            | payment_match
-        ]
-
-    # --------------------------------------------------------
-    # CREATE OPPORTUNITIES
-    # --------------------------------------------------------
-
-    opportunities = [
-        _build_opportunity(row)
-        for _, row in failed.iterrows()
-    ]
-
-    # --------------------------------------------------------
-    # PRIORITY FILTER
-    # --------------------------------------------------------
-
-    if priority:
-
-        priority_value = (
-            str(priority)
-            .strip()
-            .upper()
-        )
-
-        opportunities = [
-            item
-            for item in opportunities
-            if item["priority"]
-            == priority_value
-        ]
-
-    # --------------------------------------------------------
-    # STATUS FILTER
-    # --------------------------------------------------------
-
-    if status:
-
-        status_value = (
-            str(status)
-            .strip()
-            .upper()
-        )
-
-        opportunities = [
-            item
-            for item in opportunities
-            if item["status"]
-            == status_value
-        ]
-
-    # --------------------------------------------------------
-    # FAILURE FILTER
-    # --------------------------------------------------------
-
-    if failure_reason:
-
-        failure_value = (
-            str(failure_reason)
-            .strip()
-            .lower()
-        )
-
-        opportunities = [
-            item
-            for item in opportunities
-            if item[
-                "failure_reason"
-            ].lower()
-            == failure_value
-        ]
-
-    # --------------------------------------------------------
-    # PAYMENT METHOD FILTER
-    # --------------------------------------------------------
-
-    if payment_method:
-
-        payment_value = (
-            str(payment_method)
-            .strip()
-            .lower()
-        )
-
-        opportunities = [
-            item
-            for item in opportunities
-            if item[
-                "payment_method"
-            ].lower()
-            == payment_value
-        ]
-
-    # ========================================================
     # SORT
-    # ========================================================
+    # --------------------------------------------------------
 
-    sort_value = (
-        str(sort or "opportunity")
-        .strip()
-        .lower()
-    )
-
-    if sort_value == "probability":
-
-        opportunities.sort(
-            key=lambda item:
-                item[
-                    "recovery_probability"
-                ],
-            reverse=True,
-        )
-
-    elif sort_value == "amount":
-
-        opportunities.sort(
-            key=lambda item:
-                item[
-                    "revenue_at_risk"
-                ],
-            reverse=True,
-        )
-
-    elif sort_value == "expected_recovery":
-
-        opportunities.sort(
-            key=lambda item:
-                item[
-                    "expected_recovery"
-                ],
-            reverse=True,
-        )
-
-    else:
-
-        opportunities.sort(
-            key=lambda item: (
-                {
-                    "HIGH": 3,
-                    "MEDIUM": 2,
-                    "LOW": 1,
-                }.get(
-                    item["priority"],
-                    0,
-                ),
-
-                item[
-                    "expected_recovery"
-                ],
-
-                item[
-                    "recovery_probability"
-                ],
-
-                item["amount"],
+    opportunities.sort(
+        key=lambda item: (
+            {
+                "HIGH": 3,
+                "MEDIUM": 2,
+                "LOW": 1,
+            }.get(
+                item["priority"],
+                0,
             ),
-            reverse=True,
-        )
 
-    # ========================================================
-    # SUMMARY
-    # ========================================================
+            item["expected_recovery"],
 
-    total_opportunities = len(
-        opportunities
+            item["amount"],
+        ),
+        reverse=True,
     )
 
+    # --------------------------------------------------------
+    # SUMMARY
+    # --------------------------------------------------------
+
+    total_opportunities = len(opportunities)
+
+    # FULL amount that failed and is currently at risk
     revenue_at_risk = sum(
-        item[
-            "revenue_at_risk"
-        ]
+        item["revenue_at_risk"]
         for item in opportunities
     )
 
+    # Amount expected to be recovered according to ML
     expected_recovery = sum(
-        item[
-            "expected_recovery"
-        ]
+        item["expected_recovery"]
         for item in opportunities
     )
 
     high_priority = sum(
         1
         for item in opportunities
-        if item["priority"]
-        == "HIGH"
-    )
-
-    medium_priority = sum(
-        1
-        for item in opportunities
-        if item["priority"]
-        == "MEDIUM"
-    )
-
-    low_priority = sum(
-        1
-        for item in opportunities
-        if item["priority"]
-        == "LOW"
+        if item["priority"] == "HIGH"
     )
 
     recovery_potential = (
         (
             expected_recovery
             / revenue_at_risk
-        )
-        * 100
+        ) * 100
         if revenue_at_risk > 0
         else 0
     )
 
-    # ========================================================
+    # --------------------------------------------------------
     # FAILURE DRIVERS
-    # ========================================================
+    # --------------------------------------------------------
 
-    driver_frame = failed.copy()
+    driver_counts = {}
+
+    for item in opportunities:
+        reason = item["failure_reason"]
+
+        driver_counts[reason] = (
+            driver_counts.get(reason, 0) + 1
+        )
+
+    total_driver_volume = max(
+        sum(driver_counts.values()),
+        1,
+    )
 
     drivers = []
 
-    if not driver_frame.empty:
+    for reason, volume in sorted(
+        driver_counts.items(),
+        key=lambda x: x[1],
+        reverse=True,
+    )[:5]:
 
-        driver_frame[
-            "amount"
-        ] = pd.to_numeric(
-            driver_frame["amount"],
-            errors="coerce",
-        ).fillna(0)
+        drivers.append({
+            "name": reason,
 
-        driver_groups = (
-            driver_frame
-            .groupby(
-                "failure_reason",
-                dropna=False,
-            )
-            .agg(
-                volume=(
-                    "failure_reason",
-                    "size",
-                ),
-                revenue_at_risk=(
-                    "amount",
-                    "sum",
-                ),
-            )
-            .reset_index()
-            .sort_values(
-                "revenue_at_risk",
-                ascending=False,
-            )
-        )
+            "volume": volume,
 
-        total_driver_volume = max(
-            int(
-                driver_groups[
-                    "volume"
-                ].sum()
+            "share": round(
+                volume
+                / total_driver_volume
+                * 100,
+                1,
             ),
-            1,
+        })
+
+    # --------------------------------------------------------
+    # PAYMENT METHODS
+    # --------------------------------------------------------
+
+    payment_counts = {}
+
+    for item in opportunities:
+        method = item["payment_method"]
+
+        payment_counts[method] = (
+            payment_counts.get(method, 0) + 1
         )
 
-        for _, row in driver_groups.head(
-            5
-        ).iterrows():
-
-            name = _safe_string(
-                row[
-                    "failure_reason"
-                ],
-                "Unknown",
-            )
-
-            volume = _safe_int(
-                row["volume"]
-            )
-
-            revenue = _safe_float(
-                row[
-                    "revenue_at_risk"
-                ]
-            )
-
-            drivers.append(
-                {
-                    "name": name,
-
-                    "volume": volume,
-
-                    "share": round(
-                        (
-                            volume
-                            / total_driver_volume
-                        )
-                        * 100,
-                        1,
-                    ),
-
-                    "revenue_at_risk":
-                        round(
-                            revenue,
-                            2,
-                        ),
-
-                    "revenue_at_risk_label":
-                        _format_currency(
-                            revenue
-                        ),
-                }
-            )
-
-    # ========================================================
-    # PAYMENT METHODS
-    # ========================================================
+    total_payment_volume = max(
+        sum(payment_counts.values()),
+        1,
+    )
 
     payment_methods = []
 
-    if not failed.empty:
+    for method, volume in sorted(
+        payment_counts.items(),
+        key=lambda x: x[1],
+        reverse=True,
+    ):
 
-        payment_groups = (
-            failed
-            .groupby(
-                "payment_method",
-                dropna=False,
-            )
-            .size()
-            .reset_index(
-                name="volume"
-            )
-            .sort_values(
-                "volume",
-                ascending=False,
-            )
-        )
+        payment_methods.append({
+            "name": method,
 
-        total_payment_volume = max(
-            int(
-                payment_groups[
-                    "volume"
-                ].sum()
+            "volume": volume,
+
+            "share": round(
+                volume
+                / total_payment_volume
+                * 100,
+                1,
             ),
-            1,
-        )
+        })
 
-        for _, row in payment_groups.iterrows():
-
-            name = _safe_string(
-                row[
-                    "payment_method"
-                ],
-                "Unknown",
-            )
-
-            volume = _safe_int(
-                row["volume"]
-            )
-
-            payment_methods.append(
-                {
-                    "name": name,
-
-                    "volume": volume,
-
-                    "share": round(
-                        (
-                            volume
-                            / total_payment_volume
-                        )
-                        * 100,
-                        1,
-                    ),
-                }
-            )
-
-    # ========================================================
+    # --------------------------------------------------------
     # PAGINATION
-    # ========================================================
+    # --------------------------------------------------------
 
     per_page = max(
         1,
-        min(
-            50,
-            _safe_int(
-                per_page,
-                10,
-            ),
-        ),
+        min(int(per_page), 50),
     )
 
     page = max(
+        int(page),
         1,
-        _safe_int(
-            page,
-            1,
-        ),
     )
 
     total_pages = max(
         1,
-        math.ceil(
+        (
             total_opportunities
-            / per_page
-        ),
+            + per_page
+            - 1
+        ) // per_page,
     )
 
     page = min(
@@ -999,64 +499,26 @@ def get_recovery_queue(
         page - 1
     ) * per_page
 
-    end = (
-        start
-        + per_page
-    )
+    end = start + per_page
 
     paginated = opportunities[
         start:end
     ]
 
-    # ========================================================
-    # STRATEGY
-    # ========================================================
+    strategy_priority = (
+        "HIGH"
+        if high_priority > 0
+        else "MEDIUM"
+        if total_opportunities > 0
+        else "LOW"
+    )
 
-    if total_opportunities == 0:
-
-        strategy_priority = "LOW"
-
-        strategy_focus = (
-            "No recovery opportunities "
-            "currently match the selected filters."
-        )
-
-    elif high_priority > 0:
-
-        strategy_priority = "HIGH"
-
-        strategy_focus = (
-            "Prioritize high-value opportunities "
-            "with strong recovery probability."
-        )
-
-    elif medium_priority > 0:
-
-        strategy_priority = "MEDIUM"
-
-        strategy_focus = (
-            "Review medium-confidence opportunities "
-            "and apply recovery actions only within "
-            "configured guardrails."
-        )
-
-    else:
-
-        strategy_priority = "LOW"
-
-        strategy_focus = (
-            "Review lower-confidence opportunities "
-            "before taking recovery action."
-        )
-
-    # ========================================================
-    # FINAL DATA CONTRACT
-    # ========================================================
+    # --------------------------------------------------------
+    # FINAL RESPONSE
+    # --------------------------------------------------------
 
     return {
-
         "summary": {
-
             "eligible_opportunities":
                 total_opportunities,
 
@@ -1091,18 +553,6 @@ def get_recovery_queue(
             "high_priority_label":
                 f"{high_priority:,}",
 
-            "medium_priority":
-                medium_priority,
-
-            "medium_priority_label":
-                f"{medium_priority:,}",
-
-            "low_priority":
-                low_priority,
-
-            "low_priority_label":
-                f"{low_priority:,}",
-
             "recovery_potential":
                 round(
                     recovery_potential,
@@ -1110,37 +560,29 @@ def get_recovery_queue(
                 ),
         },
 
-        "opportunities":
-            paginated,
+        "opportunities": paginated,
 
-        "drivers":
-            drivers,
+        "drivers": drivers,
 
-        "payment_methods":
-            payment_methods,
+        "payment_methods": payment_methods,
 
         "pagination": {
+            "page": page,
 
-            "page":
-                page,
+            "per_page": per_page,
 
-            "per_page":
-                per_page,
+            "total": total_opportunities,
 
-            "total":
-                total_opportunities,
-
-            "total_pages":
-                total_pages,
+            "total_pages": total_pages,
         },
 
         "ai_strategy": {
-
-            "priority":
-                strategy_priority,
+            "priority": strategy_priority,
 
             "focus":
-                strategy_focus,
+                "Prioritize high-value "
+                "opportunities with strong "
+                "recovery probability.",
 
             "expected_recovery_label":
                 _format_currency(

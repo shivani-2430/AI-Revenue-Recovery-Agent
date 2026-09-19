@@ -1,378 +1,629 @@
-from datetime import datetime, timedelta
+from database.db import db
+
+from models.transaction import Transaction
+from models.customer import Customer
+from models.recovery_action import RecoveryAction
+from models.recovery_outcome import RecoveryOutcome
+from models.payment_attempt import PaymentAttempt
+from models.audit_log import AuditLog
 
 
 def get_transaction_details(transaction_id):
 
-    original_transaction_id = str(transaction_id)
+    # =========================================================
+    # FIND TRANSACTION
+    # =========================================================
 
-    # Convert transaction IDs such as TXN_00008727
-    # into the numeric value used by the mock generator.
-    if original_transaction_id.startswith("TXN_"):
-        numeric_transaction_id = int(
-            original_transaction_id.split("_")[-1]
+    original_transaction_id = str(
+        transaction_id
+    ).strip()
+
+    transaction = (
+        Transaction.query
+        .filter(
+            Transaction.transaction_id
+            == original_transaction_id
         )
-    else:
-        numeric_transaction_id = int(
-            original_transaction_id
-        )
-
-    transaction_id = numeric_transaction_id
-    """
-    Temporary frontend data provider.
-
-    This is intentionally kept behind a service layer.
-    Later this service will be replaced with PostgreSQL-backed
-    transaction retrieval without changing the frontend.
-    """
-
-
-
-    payment_methods = [
-        "UPI",
-        "Card",
-        "Net Banking",
-        "Wallet",
-    ]
-
-    failure_reasons = [
-        "Network Error",
-        "Bank Decline",
-        "Insufficient Funds",
-        "Authentication Failed",
-        "Gateway Timeout",
-    ]
-
-    customer_names = [
-        "Rahul Kumar",
-        "Ananya Sharma",
-        "Vikram Patel",
-        "Neha Singh",
-        "Arjun Mehta",
-        "Priya Kapoor",
-        "Rohan Shah",
-        "Sneha Kapoor",
-    ]
-
-    merchant_categories = [
-        "E-commerce",
-        "Travel",
-        "Education",
-        "Healthcare",
-        "SaaS",
-    ]
-
-    recovery_actions = [
-        "SMART RETRY",
-        "CUSTOMER REMINDER",
-        "AUTHENTICATION RETRY",
-        "PAYMENT METHOD SWITCH",
-        "STOP",
-    ]
-
-    policies = [
-        "Network Failure Recovery Policy",
-        "Bank Decline Recovery Policy",
-        "Insufficient Funds Policy",
-        "Authentication Recovery Policy",
-        "Gateway Failure Policy",
-    ]
-
-    # ---------------------------------------------------------
-    # DYNAMIC VALUES
-    # ---------------------------------------------------------
-
-    index = transaction_id - 1
-
-    amount = (
-        3500
-        + ((transaction_id * 1379) % 60000)
+        .first()
     )
 
-    payment_method = payment_methods[
-        index % len(payment_methods)
-    ]
+    if not transaction:
+        return None
 
-    failure_reason = failure_reasons[
-        index % len(failure_reasons)
-    ]
+    # =========================================================
+    # CUSTOMER
+    # =========================================================
 
-    customer_name = customer_names[
-        index % len(customer_names)
-    ]
+    customer = transaction.customer
 
     customer_id = (
-        f"CUST_{10000 + ((transaction_id * 731) % 89999):05d}"
+        customer.customer_id
+        if customer
+        else None
     )
 
-    merchant_category = merchant_categories[
-        index % len(merchant_categories)
-    ]
+    # Customer model does not contain a customer_name field.
+    # Use customer_id as the available customer identifier.
+    customer_name = customer_id
 
-    # Recovery probability changes according to
-    # transaction characteristics.
+    # Convert stored customer value into a readable segment.
+    if customer:
 
-    base_probability = (
-        88
-        - ((transaction_id * 7) % 45)
-    )
+        if customer.customer_segment:
+            customer_value = (
+                customer.customer_segment
+            )
 
-    if failure_reason == "Network Error":
-        base_probability += 8
+        elif float(
+            customer.customer_value or 0
+        ) >= 30000:
 
-    elif failure_reason == "Insufficient Funds":
-        base_probability -= 12
+            customer_value = "High"
 
-    elif failure_reason == "Gateway Timeout":
-        base_probability -= 8
+        elif float(
+            customer.customer_value or 0
+        ) >= 12000:
 
-    elif failure_reason == "Authentication Failed":
-        base_probability -= 3
+            customer_value = "Medium"
 
-    recovery_probability = max(
-        18,
-        min(96, base_probability),
-    )
+        else:
 
-    retry_count = (
-        transaction_id % 4
-    )
-
-    customer_value = (
-        "High"
-        if amount >= 30000
-        else "Medium"
-        if amount >= 12000
-        else "Low"
-    )
-
-    if recovery_probability >= 75:
-        status = "RECOVERABLE"
-
-    elif recovery_probability >= 50:
-        status = "ESCALATE"
+            customer_value = "Low"
 
     else:
-        status = "STOP"
 
-    # Some transactions are dynamically marked recovered
-    # when their recovery probability and ID pattern indicate
-    # a successful recovery.
+        customer_value = "Unknown"
 
-    recovered = (
-        recovery_probability >= 75
-        and transaction_id % 3 == 0
-    )
+    # =========================================================
+    # RECOVERY ACTION
+    # =========================================================
 
-    if recovered:
-        status = "RECOVERED"
+    latest_action = None
 
-    if recovered:
-        action = "SMART RETRY"
+    if transaction.recovery_actions:
 
-        amount_recovered = amount
-
-        recovery_time = (
-            35 + ((transaction_id * 11) % 70)
+        latest_action = max(
+            transaction.recovery_actions,
+            key=lambda action: (
+                action.created_at
+                or transaction.transaction_timestamp
+            )
         )
 
-        guardrail = "PASSED"
+    # =========================================================
+    # RECOVERY OUTCOME
+    # =========================================================
 
-    elif status == "RECOVERABLE":
+    recovery_outcome = None
 
-        action = recovery_actions[
-            transaction_id % 4
-        ]
+    if latest_action:
 
-        amount_recovered = 0
+        recovery_outcome = (
+            latest_action.recovery_outcome
+        )
 
-        recovery_time = None
+    if not recovery_outcome and transaction.recovery_outcomes:
 
-        guardrail = "PASSED"
+        recovery_outcome = max(
+            transaction.recovery_outcomes,
+            key=lambda outcome: (
+                outcome.completed_at
+                or transaction.transaction_timestamp
+            )
+        )
 
-    elif status == "ESCALATE":
+    # =========================================================
+    # RECOVERY VALUES
+    # =========================================================
 
-        action = "CUSTOMER REMINDER"
+    if latest_action:
 
-        amount_recovered = 0
+        recovery_probability = (
+            round(
+                float(
+                    latest_action.recovery_probability
+                ) * 100,
+                2
+            )
+            if latest_action.recovery_probability
+            is not None
+            else None
+        )
 
-        recovery_time = None
+        recovery_action = (
+            latest_action.action_type
+        )
 
-        guardrail = "PASSED"
+        guardrail = (
+            latest_action.guardrail_status
+            or "PENDING"
+        )
+
+        revenue_at_risk = float(
+            latest_action.revenue_at_risk
+            or 0
+        )
+
+        risk_score = (
+            float(
+                latest_action.risk_score
+            )
+            if latest_action.risk_score
+            is not None
+            else None
+        )
+
+        action_reason = (
+            latest_action.reason
+        )
 
     else:
 
-        action = "STOP"
+        recovery_probability = None
+        recovery_action = None
+        guardrail = "NOT_EVALUATED"
+        revenue_at_risk = 0
+        risk_score = None
+        action_reason = None
 
-        amount_recovered = 0
+    # =========================================================
+    # OUTCOME VALUES
+    # =========================================================
 
-        recovery_time = None
+    amount_recovered = 0
+    recovered_at = None
 
-        guardrail = "BLOCKED"
+    if recovery_outcome:
 
-    failure_pattern = (
-        "Temporary"
-        if failure_reason in [
-            "Network Error",
-            "Gateway Timeout",
-        ]
-        else "Potentially Temporary"
-        if failure_reason == "Bank Decline"
-        else "Customer Funds"
-        if failure_reason == "Insufficient Funds"
-        else "Authentication"
-    )
+        amount_recovered = float(
+            recovery_outcome.amount_recovered
+            or 0
+        )
 
-    # ---------------------------------------------------------
-    # DYNAMIC TIMESTAMPS
-    # ---------------------------------------------------------
-
-    created_at = datetime.utcnow() - timedelta(
-        minutes=(transaction_id % 120)
-    )
-
-    if recovered:
         recovered_at = (
-            created_at
-            + timedelta(seconds=recovery_time)
+            recovery_outcome.completed_at
         )
-    else:
-        recovered_at = None
 
-    # ---------------------------------------------------------
-    # DYNAMIC DECISION ID
-    # ---------------------------------------------------------
+    # =========================================================
+    # STATUS
+    # =========================================================
+
+    transaction_status = str(
+        transaction.status or ""
+    ).upper()
+
+    if recovery_outcome:
+
+        outcome_status = str(
+            recovery_outcome.outcome or ""
+        ).upper()
+
+        if outcome_status == "SUCCESS":
+
+            display_status = "RECOVERED"
+
+        else:
+
+            display_status = outcome_status
+
+    elif transaction_status == "SUCCESS":
+
+        display_status = "RECOVERED"
+
+    elif transaction_status == "FAILED":
+
+        if (
+            transaction.retry_count is not None
+            and transaction.retry_count < 3
+        ):
+
+            display_status = "RECOVERABLE"
+
+        else:
+
+            display_status = "FAILED"
+
+    else:
+
+        display_status = transaction_status
+
+    # =========================================================
+    # FAILURE PATTERN
+    # =========================================================
+
+    failure_reason = (
+        transaction.failure_reason
+        or "Unknown"
+    )
+
+    failure_reason_upper = (
+        failure_reason.upper()
+    )
+
+    if (
+        "NETWORK" in failure_reason_upper
+        or "GATEWAY" in failure_reason_upper
+    ):
+
+        failure_pattern = "Temporary"
+
+    elif "BANK" in failure_reason_upper:
+
+        failure_pattern = (
+            "Potentially Temporary"
+        )
+
+    elif (
+        "INSUFFICIENT" in failure_reason_upper
+        or "FUNDS" in failure_reason_upper
+    ):
+
+        failure_pattern = "Customer Funds"
+
+    elif "AUTHENTICATION" in failure_reason_upper:
+
+        failure_pattern = "Authentication"
+
+    else:
+
+        failure_pattern = "Unknown"
+
+    # =========================================================
+    # PAYMENT ATTEMPTS
+    # =========================================================
+
+    attempts = sorted(
+        transaction.payment_attempts or [],
+        key=lambda attempt: (
+            attempt.attempt_number
+            or 0
+        )
+    )
+
+    latest_attempt = (
+        attempts[-1]
+        if attempts
+        else None
+    )
+
+    attempt_id = None
+
+    if latest_attempt:
+
+        attempt_id = (
+            f"ATT_{latest_attempt.id:06d}"
+        )
+
+    # =========================================================
+    # AUDIT LOG
+    # =========================================================
+
+    audit_logs = sorted(
+        transaction.audit_logs or [],
+        key=lambda log: (
+            log.created_at
+            or transaction.transaction_timestamp
+        )
+    )
+
+    latest_audit = (
+        audit_logs[-1]
+        if audit_logs
+        else None
+    )
 
     decision_id = (
-        f"DEC_{((transaction_id * 982451653) % 89999999):08d}"
+        latest_audit.decision_id
+        if latest_audit
+        else None
     )
 
-    attempt_id = (
-        f"ATT_{((transaction_id * 7919) % 899999):06d}"
+    policy = (
+        latest_audit.policy_check
+        if latest_audit
+        else None
     )
 
-    razorpay_payment_id = (
-        f"pay_{((transaction_id * 104729) % 9999999):07d}"
+    model = (
+        latest_audit.model_version
+        if latest_audit
+        else "Recovery-RF-v1.0"
     )
 
-    # ---------------------------------------------------------
+    # =========================================================
+    # PAYMENT TYPE
+    # =========================================================
+
+    payment_type = (
+        "Subscription"
+        if transaction.subscription_status
+        else "One-time"
+    )
+
+    # =========================================================
+    # RECOVERY TIME
+    # =========================================================
+
+    recovery_time = None
+
+    if (
+        latest_action
+        and latest_action.executed_at
+        and recovered_at
+    ):
+
+        recovery_time = int(
+            (
+                recovered_at
+                - latest_action.executed_at
+            ).total_seconds()
+        )
+
+    recovery_time_label = (
+        f"{recovery_time} seconds"
+        if recovery_time is not None
+        else "Pending"
+    )
+
+    # =========================================================
     # TIMELINE
+    # =========================================================
+
+    timeline = []
+
+    created_at = (
+        transaction.transaction_timestamp
+    )
+
+    # ---------------------------------------------------------
+    # PAYMENT INITIATED
     # ---------------------------------------------------------
 
-    timeline = [
-
+    timeline.append(
         {
-            "time": created_at.strftime("%I:%M:%S %p"),
-            "title": "Payment Initiated",
-            "description":
-                f"Customer started {payment_method} payment",
-            "status": "COMPLETED",
-            "type": "completed",
-            "icon": "fa-play",
-        },
+            "time":
+                created_at.strftime(
+                    "%I:%M:%S %p"
+                ),
 
-        {
-            "time": (
-                created_at
-                + timedelta(seconds=3)
-            ).strftime("%I:%M:%S %p"),
-
-            "title": "Payment Failed",
-
-            "description":
-                f"{failure_reason} · Payment attempt failed",
-
-            "status": "FAILED",
-
-            "type": "failed",
-
-            "icon":
-                "fa-exclamation",
-        },
-
-        {
-            "time": (
-                created_at
-                + timedelta(seconds=5)
-            ).strftime("%I:%M:%S %p"),
-
-            "title": "ML Recovery Analysis",
-
-            "description":
-                f"Recovery probability calculated: "
-                f"{recovery_probability}%",
-
-            "status": "ANALYZED",
-
-            "type": "intelligence",
-
-            "icon": "fa-brain",
-        },
-
-        {
-            "time": (
-                created_at
-                + timedelta(seconds=7)
-            ).strftime("%I:%M:%S %p"),
-
-            "title": "AI Strategy Generated",
-
-            "description":
-                f"Recommended action: {action}",
-
-            "status": "GENERATED",
-
-            "type": "intelligence",
-
-            "icon":
-                "fa-wand-magic-sparkles",
-        },
-
-        {
-            "time": (
-                created_at
-                + timedelta(seconds=8)
-            ).strftime("%I:%M:%S %p"),
-
-            "title": "Guardrail Validation",
+            "title":
+                "Payment Initiated",
 
             "description":
                 (
-                    "All policy checks passed"
-                    if guardrail == "PASSED"
-                    else "Recovery action blocked by policy"
+                    f"Customer started "
+                    f"{transaction.payment_method} payment"
                 ),
 
-            "status": guardrail,
+            "status":
+                "COMPLETED",
 
             "type":
-                "completed"
-                if guardrail == "PASSED"
-                else "failed",
+                "completed",
 
             "icon":
-                "fa-shield-halved",
-        },
-    ]
+                "fa-play",
+        }
+    )
 
-    if guardrail == "PASSED":
+    # ---------------------------------------------------------
+    # PAYMENT ATTEMPTS
+    # ---------------------------------------------------------
+
+    for attempt in attempts:
+
+        attempt_status = str(
+            attempt.status or ""
+        ).upper()
+
+        if attempt_status == "SUCCESS":
+
+            timeline_type = "recovered"
+            timeline_icon = "fa-check"
+
+        elif attempt_status in {
+            "FAILED",
+            "FAILURE",
+        }:
+
+            timeline_type = "failed"
+            timeline_icon = "fa-exclamation"
+
+        else:
+
+            timeline_type = "completed"
+            timeline_icon = "fa-rotate"
+
+        attempt_failure = (
+            attempt.failure_reason
+            or attempt_status
+            or "Payment attempt processed"
+        )
 
         timeline.append(
             {
-                "time": (
-                    created_at
-                    + timedelta(seconds=10)
-                ).strftime("%I:%M:%S %p"),
+                "time":
+                    attempt.attempted_at.strftime(
+                        "%I:%M:%S %p"
+                    )
+                    if attempt.attempted_at
+                    else "",
 
                 "title":
-                    "Recovery Action Executed",
+                    (
+                        f"Payment Attempt "
+                        f"#{attempt.attempt_number}"
+                    ),
 
                 "description":
-                    f"{action} selected for recovery",
+                    str(attempt_failure),
 
                 "status":
-                    "EXECUTED"
-                    if recovered
-                    else "READY",
+                    attempt_status,
+
+                "type":
+                    timeline_type,
+
+                "icon":
+                    timeline_icon,
+            }
+        )
+
+    # ---------------------------------------------------------
+    # ML ANALYSIS
+    # ---------------------------------------------------------
+
+    if latest_action:
+
+        timeline.append(
+            {
+                "time":
+                    (
+                        latest_action.created_at.strftime(
+                            "%I:%M:%S %p"
+                        )
+                        if latest_action.created_at
+                        else ""
+                    ),
+
+                "title":
+                    "ML Recovery Analysis",
+
+                "description":
+                    (
+                        "Recovery probability calculated: "
+                        f"{recovery_probability}%"
+                    ),
+
+                "status":
+                    "ANALYZED",
+
+                "type":
+                    "intelligence",
+
+                "icon":
+                    "fa-brain",
+            }
+        )
+
+        # -----------------------------------------------------
+        # AI STRATEGY
+        # -----------------------------------------------------
+
+        timeline.append(
+            {
+                "time":
+                    (
+                        latest_action.created_at.strftime(
+                            "%I:%M:%S %p"
+                        )
+                        if latest_action.created_at
+                        else ""
+                    ),
+
+                "title":
+                    "AI Strategy Generated",
+
+                "description":
+                    (
+                        "Recommended action: "
+                        f"{recovery_action}"
+                    ),
+
+                "status":
+                    "GENERATED",
+
+                "type":
+                    "intelligence",
+
+                "icon":
+                    "fa-wand-magic-sparkles",
+            }
+        )
+
+        # -----------------------------------------------------
+        # GUARDRAIL
+        # -----------------------------------------------------
+
+        guardrail_passed = (
+            str(guardrail).upper()
+            in {
+                "APPROVED",
+                "PASSED",
+            }
+        )
+
+        timeline.append(
+            {
+                "time":
+                    (
+                        latest_action.created_at.strftime(
+                            "%I:%M:%S %p"
+                        )
+                        if latest_action.created_at
+                        else ""
+                    ),
+
+                "title":
+                    "Guardrail Validation",
+
+                "description":
+                    (
+                        "All policy checks passed"
+                        if guardrail_passed
+                        else
+                        "Recovery action blocked by policy"
+                    ),
+
+                "status":
+                    str(guardrail).upper(),
+
+                "type":
+                    (
+                        "completed"
+                        if guardrail_passed
+                        else "failed"
+                    ),
+
+                "icon":
+                    "fa-shield-halved",
+            }
+        )
+
+        # -----------------------------------------------------
+        # RECOVERY ACTION
+        # -----------------------------------------------------
+
+        timeline.append(
+            {
+                "time":
+                    (
+                        latest_action.executed_at.strftime(
+                            "%I:%M:%S %p"
+                        )
+                        if latest_action.executed_at
+                        else
+                        latest_action.created_at.strftime(
+                            "%I:%M:%S %p"
+                        )
+                        if latest_action.created_at
+                        else ""
+                    ),
+
+                "title":
+                    "Recovery Action",
+
+                "description":
+                    (
+                        f"{recovery_action} selected "
+                        "for recovery"
+                    ),
+
+                "status":
+                    str(
+                        latest_action.status
+                        or "PENDING"
+                    ).upper(),
 
                 "type":
                     "completed",
@@ -382,13 +633,26 @@ def get_transaction_details(transaction_id):
             }
         )
 
-    if recovered:
+    # ---------------------------------------------------------
+    # PAYMENT RECOVERED
+    # ---------------------------------------------------------
+
+    if (
+        recovery_outcome
+        and str(
+            recovery_outcome.outcome or ""
+        ).upper() == "SUCCESS"
+    ):
 
         timeline.append(
             {
                 "time":
-                    recovered_at.strftime(
-                        "%I:%M:%S %p"
+                    (
+                        recovered_at.strftime(
+                            "%I:%M:%S %p"
+                        )
+                        if recovered_at
+                        else ""
                     ),
 
                 "title":
@@ -408,56 +672,71 @@ def get_transaction_details(transaction_id):
             }
         )
 
-    # ---------------------------------------------------------
+    # =========================================================
     # WHY THIS ACTION?
-    # ---------------------------------------------------------
+    # =========================================================
 
-    reasons = [
+    reasons = []
 
-        (
-            f"{failure_reason} pattern has "
-            "historical recovery potential"
-        ),
+    if action_reason:
 
-        (
-            f"Customer is classified as "
-            f"{customer_value.lower()} value"
-        ),
+        reasons.append(
+            str(action_reason)
+        )
 
-        (
-            f"Current retry count is "
-            f"{retry_count}, within configured limits"
-        ),
+    if (
+        customer
+        and customer.historical_success_rate
+        is not None
+    ):
 
-        (
-            f"Recovery probability is "
+        reasons.append(
+            "Customer historical success rate: "
+            f"{float(customer.historical_success_rate):.1f}%"
+        )
+
+    reasons.append(
+        "Current retry count is "
+        f"{transaction.retry_count}, "
+        "within configured limits"
+    )
+
+    if recovery_probability is not None:
+
+        reasons.append(
+            "Recovery probability is "
             f"{recovery_probability}%"
-        ),
+        )
 
-        (
-            "Action is evaluated against merchant policy"
-        ),
-    ]
+    if policy:
 
-    # ---------------------------------------------------------
+        reasons.append(
+            "Action evaluated against merchant policy: "
+            f"{policy}"
+        )
+
+    # =========================================================
     # RETURN COMPLETE OBJECT
-    # ---------------------------------------------------------
+    # =========================================================
 
     return {
 
-        "id": transaction_id,
+        "id":
+            transaction.id,
 
         "transaction_id":
-            original_transaction_id,
+            transaction.transaction_id,
 
         "amount":
-            amount,
+            float(
+                transaction.amount or 0
+            ),
 
         "amount_formatted":
-            f"₹{amount:,.0f}",
+            f"₹{float(transaction.amount or 0):,.0f}",
 
         "payment_method":
-            payment_method,
+            transaction.payment_method,
 
         "failure_reason":
             failure_reason,
@@ -469,23 +748,19 @@ def get_transaction_details(transaction_id):
             customer_id,
 
         "merchant_category":
-            merchant_category,
+            transaction.merchant_category,
 
         "payment_type":
-            (
-                "Subscription"
-                if transaction_id % 2 == 0
-                else "One-time"
-            ),
+            payment_type,
 
         "recovery_probability":
             recovery_probability,
 
         "status":
-            status,
+            display_status,
 
         "recovery_action":
-            action,
+            recovery_action,
 
         "recovery_time":
             recovery_time,
@@ -503,16 +778,16 @@ def get_transaction_details(transaction_id):
             failure_pattern,
 
         "retry_count":
-            retry_count,
+            transaction.retry_count,
 
         "model":
-            "Recovery-RF-v1.0",
+            model,
 
         "decision_id":
             decision_id,
 
         "policy":
-            policies[index % len(policies)],
+            policy,
 
         "guardrail":
             guardrail,
@@ -520,12 +795,24 @@ def get_transaction_details(transaction_id):
         "attempt_id":
             attempt_id,
 
+        # PaymentAttempt does not have a Razorpay
+        # payment ID column.
         "razorpay_payment_id":
-            razorpay_payment_id,
+            None,
+
+        "revenue_at_risk":
+            revenue_at_risk,
+
+        "risk_score":
+            risk_score,
 
         "created_at":
-            created_at.strftime(
-                "%d %b %Y, %I:%M %p"
+            (
+                created_at.strftime(
+                    "%d %b %Y, %I:%M %p"
+                )
+                if created_at
+                else None
             ),
 
         "recovered_at":
@@ -538,11 +825,7 @@ def get_transaction_details(transaction_id):
             ),
 
         "recovery_time_label":
-            (
-                f"{recovery_time} seconds"
-                if recovery_time
-                else "Pending"
-            ),
+            recovery_time_label,
 
         "timeline":
             timeline,

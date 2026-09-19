@@ -209,7 +209,12 @@ def get_recovery_queue(
 
         amount = float(transaction.amount)
 
-        revenue_at_risk = calculate_revenue_at_risk(
+        
+# Full failed transaction amount currently at risk
+        revenue_at_risk = amount
+
+# ML probability-weighted amount expected to be recovered
+        expected_recovery = calculate_revenue_at_risk(
             amount,
             prediction["recovery_probability"],
         )
@@ -264,12 +269,12 @@ def get_recovery_queue(
             ),
 
             "expected_recovery": round(
-                revenue_at_risk,
+                expected_recovery,
                 2,
             ),
 
             "expected_recovery_label": _format_currency(
-                revenue_at_risk
+                expected_recovery
             ),
 
             "priority": priority,
