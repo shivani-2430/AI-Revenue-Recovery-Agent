@@ -462,7 +462,7 @@ def register_routes(app):
 			"data": data
 		})
 
-		# =========================================================
+	# =========================================================
 	# TRANSACTIONS
 	# FRONTEND PHASE
 	# =========================================================
@@ -473,7 +473,22 @@ def register_routes(app):
 		return render_template(
 			"transactions.html"
 		)
+	# =========================================================
+	# TRANSACTION DETAIL PAGE
+	# DYNAMIC DATA
+	# =========================================================
 
+	@app.route(
+		"/transactions/<transaction_id>"
+	)
+	def transaction_details(
+		transaction_id
+	):
+
+		return render_template(
+			"transaction_details.html",
+			transaction_id=transaction_id
+		)
 	# =========================================================
 	# TRANSACTION LIST API
 	# DYNAMIC DATA
@@ -552,17 +567,34 @@ def register_routes(app):
 				f"%{search}%"
 			)
 
+			search_filters = [
+				Transaction.transaction_id.ilike(
+					search_term
+				),
+
+				Transaction.failure_reason.ilike(
+					search_term
+				),
+
+				Transaction.payment_method.ilike(
+					search_term
+				),
+			]
+
+			# customer_id is an INTEGER in PostgreSQL.
+			# Only compare it numerically when the
+			# search value is numeric.
+			if search.isdigit():
+
+				search_filters.append(
+					Transaction.customer_id
+					==
+					int(search)
+				)
+
 			query = query.filter(
 				or_(
-					Transaction.transaction_id.ilike(
-						search_term
-					),
-					Transaction.failure_reason.ilike(
-						search_term
-					),
-					Transaction.payment_method.ilike(
-						search_term
-					),
+					*search_filters
 				)
 			)
 
@@ -584,7 +616,10 @@ def register_routes(app):
 				func.upper(
 					Transaction.status
 				) == "FAILED",
+
 				Transaction.retry_count < 3,
+
+				Transaction.customer_id.isnot(None),
 			)
 
 		elif status_filter == "recovered":
@@ -679,6 +714,30 @@ def register_routes(app):
 
 				display_status = status
 
+			recovery_probability = None
+
+			if transaction.recovery_actions:
+
+				latest_action = max(
+					transaction.recovery_actions,
+					key=lambda action: (
+						action.created_at
+						or datetime.min
+					)
+				)
+
+				recovery_probability = (
+					round(
+						float(
+							latest_action.recovery_probability
+						) * 100,
+						2
+					)
+					if latest_action.recovery_probability
+					is not None
+					else None
+				)
+
 			rows.append(
 				{
 					"transaction_id":
@@ -703,7 +762,7 @@ def register_routes(app):
 						transaction.failure_reason,
 
 					"recovery_probability":
-						None,
+						recovery_probability,
 
 					"status":
 						display_status,
@@ -720,13 +779,101 @@ def register_routes(app):
 				}
 			)
 
+		# -----------------------------------------------------
+		# TRANSACTION SUMMARY
+		# -----------------------------------------------------
+
+		total_transactions = (
+			Transaction.query.count()
+		)
+
+		failed_payments = (
+			Transaction.query
+			.filter(
+				func.upper(
+					Transaction.status
+				) == "FAILED"
+			)
+			.count()
+		)
+
+		revenue_at_risk = (
+			db.session.query(
+				func.coalesce(
+					func.sum(
+						RecoveryAction.revenue_at_risk
+					),
+					0
+				)
+			)
+			.scalar()
+		)
+
+		recovery_eligible = (
+			Transaction.query
+			.filter(
+				func.upper(
+					Transaction.status
+				) == "FAILED",
+
+				Transaction.retry_count < 3,
+
+				Transaction.customer_id.isnot(None),
+			)
+			.count()
+		)
+
+		failure_rate = (
+			(
+				failed_payments
+				/
+				total_transactions
+			) * 100
+			if total_transactions
+			else 0
+		)
+
+		eligible_rate = (
+			(
+				recovery_eligible
+				/
+				failed_payments
+			) * 100
+			if failed_payments
+			else 0
+		)
+
 		return jsonify(
 			{
 				"success": True,
 
 				"data": rows,
 
+				"summary": {
+
+					"total_transactions":
+						total_transactions,
+
+					"failed_payments":
+						failed_payments,
+
+					"revenue_at_risk":
+						float(
+							revenue_at_risk or 0
+						),
+
+					"recovery_eligible":
+						recovery_eligible,
+
+					"failure_rate":
+						failure_rate,
+
+					"eligible_rate":
+						eligible_rate,
+				},
+
 				"pagination": {
+
 					"page":
 						pagination.page,
 
@@ -741,7 +888,66 @@ def register_routes(app):
 				},
 			}
 		)
+	# =========================================================
+	# TRANSACTION DETAIL API
+	# DYNAMIC DATA
+	# =========================================================
 
+	@app.route(
+		"/api/transactions/<transaction_id>",
+		methods=["GET"]
+	)
+	def get_transaction(
+		transaction_id
+	):
+
+		try:
+
+			transaction = (
+				get_transaction_details(
+					transaction_id
+				)
+			)
+
+			if not transaction:
+
+				return jsonify(
+					{
+						"success": False,
+						"error":
+							"Transaction not found"
+					}
+				), 404
+
+			return jsonify(
+				{
+					"success": True,
+					"data": transaction
+				}
+			)
+
+		except (
+			ValueError,
+			TypeError
+		):
+
+			return jsonify(
+				{
+					"success": False,
+					"error":
+						"Invalid transaction ID"
+				}
+			), 400
+
+		except Exception as error:
+
+			return jsonify(
+				{
+					"success": False,
+					"error":
+						str(error)
+				}
+			), 500
 	# =========================================================
 # CUSTOMERS
 # BACKEND READY

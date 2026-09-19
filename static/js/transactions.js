@@ -46,6 +46,44 @@ document.addEventListener(
             document.querySelectorAll(
                 ".pagination-button"
             );
+        // =====================================================
+        // SUMMARY CARDS
+        // =====================================================
+
+        const totalTransactionsValue =
+            document.getElementById(
+                "totalTransactionsValue"
+            );
+
+        const totalTransactionsMeta =
+            document.getElementById(
+                "totalTransactionsMeta"
+            );
+
+        const failedPaymentsValue =
+            document.getElementById(
+                "failedPaymentsValue"
+            );
+
+        const failedPaymentsMeta =
+            document.getElementById(
+                "failedPaymentsMeta"
+            );
+
+        const revenueAtRiskValue =
+            document.getElementById(
+                "revenueAtRiskValue"
+            );
+
+        const recoveryEligibleValue =
+            document.getElementById(
+                "recoveryEligibleValue"
+            );
+
+        const recoveryEligibleMeta =
+            document.getElementById(
+                "recoveryEligibleMeta"
+            );
 
         let currentPage = 1;
 
@@ -124,6 +162,11 @@ document.addEventListener(
 
                 renderTransactions(
                     result.data || []
+                );
+
+
+                updateSummaryCards(
+                    result.summary
                 );
 
 
@@ -437,6 +480,107 @@ document.addEventListener(
                 `Showing ${
                     transactions.length
                 } transactions`;
+
+        }
+        // =====================================================
+        // UPDATE SUMMARY CARDS
+        // =====================================================
+
+        function updateSummaryCards(
+            summary
+        ) {
+
+            if (!summary) {
+                return;
+            }
+
+
+            if (
+                totalTransactionsValue
+            ) {
+
+                totalTransactionsValue.textContent =
+                    Number(
+                        summary.total_transactions || 0
+                    ).toLocaleString(
+                        "en-IN"
+                    );
+
+            }
+
+
+            if (
+                totalTransactionsMeta
+            ) {
+
+                totalTransactionsMeta.textContent =
+                    "All transactions";
+
+            }
+
+
+            if (
+                failedPaymentsValue
+            ) {
+
+                failedPaymentsValue.textContent =
+                    Number(
+                        summary.failed_payments || 0
+                    ).toLocaleString(
+                        "en-IN"
+                    );
+
+            }
+
+
+            if (
+                failedPaymentsMeta
+            ) {
+
+                failedPaymentsMeta.textContent =
+                    `${Number(
+                        summary.failure_rate || 0
+                    ).toFixed(1)}% of transactions`;
+
+            }
+
+
+            if (
+                revenueAtRiskValue
+            ) {
+
+                revenueAtRiskValue.textContent =
+                    formatCurrency(
+                        summary.revenue_at_risk || 0
+                    );
+
+            }
+
+
+            if (
+                recoveryEligibleValue
+            ) {
+
+                recoveryEligibleValue.textContent =
+                    Number(
+                        summary.recovery_eligible || 0
+                    ).toLocaleString(
+                        "en-IN"
+                    );
+
+            }
+
+
+            if (
+                recoveryEligibleMeta
+            ) {
+
+                recoveryEligibleMeta.textContent =
+                    `${Number(
+                        summary.eligible_rate || 0
+                    ).toFixed(1)}% of failures`;
+
+            }
 
         }
 
