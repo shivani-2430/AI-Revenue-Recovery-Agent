@@ -22,7 +22,7 @@ from flask import render_template, request, redirect, url_for, jsonify
 from services.customer_service import get_customers
 
 from services.mock_transaction_service import (
-	get_transaction_details,
+    get_transaction_details,
 )
 from services.recovery_pipeline_service import (
 	process_recovery,
@@ -55,6 +55,10 @@ from services.mock_policies_service import (
 	get_policies,
 	update_policies,
 	reset_policies,
+)
+from sqlalchemy import (
+    func,
+    or_,
 )
 def register_routes(app):
 
@@ -458,7 +462,7 @@ def register_routes(app):
 			"data": data
 		})
 
-	# =========================================================
+		# =========================================================
 	# TRANSACTIONS
 	# FRONTEND PHASE
 	# =========================================================
@@ -469,52 +473,274 @@ def register_routes(app):
 		return render_template(
 			"transactions.html"
 		)
-	
-
 
 	# =========================================================
-	# TRANSACTION DETAILS
-	# FRONTEND PHASE
-	# DYNAMIC DATA PROVIDER
+	# TRANSACTION LIST API
+	# DYNAMIC DATA
 	# =========================================================
 
 	@app.route(
-		"/transactions/<transaction_id>"
-	)
-	def transaction_details(
-		transaction_id
-	):
-
-		return render_template(
-			"transaction_details.html",
-			transaction_id=transaction_id,
-		)
-
-
-	# =========================================================
-	# TRANSACTION DETAILS API
-	# FRONTEND PHASE
-	# =========================================================
-
-	@app.route(
-		"/api/transactions/<transaction_id>",
+		"/api/transactions",
 		methods=["GET"]
 	)
-	def get_transaction(
-		transaction_id
-	):
+	def transactions_api():
 
-		transaction = get_transaction_details(
-			transaction_id
+		search = request.args.get(
+			"search",
+			""
+		).strip()
+
+		status_filter = request.args.get(
+			"status",
+			"all"
+		).lower()
+
+		failure_filter = request.args.get(
+			"failure",
+			"all"
+		).lower()
+
+		method_filter = request.args.get(
+			"method",
+			"all"
+		).lower()
+
+		try:
+
+			page = max(
+				int(
+					request.args.get(
+						"page",
+						1
+					)
+				),
+				1
+			)
+
+		except (TypeError, ValueError):
+
+			page = 1
+
+		try:
+
+			per_page = min(
+				max(
+					int(
+						request.args.get(
+							"per_page",
+							10
+						)
+					),
+					1
+				),
+				50
+			)
+
+		except (TypeError, ValueError):
+
+			per_page = 10
+
+		query = Transaction.query
+
+		# -----------------------------------------------------
+		# SEARCH
+		# -----------------------------------------------------
+
+		if search:
+
+			search_term = (
+				f"%{search}%"
+			)
+
+			query = query.filter(
+				or_(
+					Transaction.transaction_id.ilike(
+						search_term
+					),
+					Transaction.failure_reason.ilike(
+						search_term
+					),
+					Transaction.payment_method.ilike(
+						search_term
+					),
+				)
+			)
+
+		# -----------------------------------------------------
+		# STATUS FILTER
+		# -----------------------------------------------------
+
+		if status_filter == "failed":
+
+			query = query.filter(
+				func.upper(
+					Transaction.status
+				) == "FAILED"
+			)
+
+		elif status_filter == "recoverable":
+
+			query = query.filter(
+				func.upper(
+					Transaction.status
+				) == "FAILED",
+				Transaction.retry_count < 3,
+			)
+
+		elif status_filter == "recovered":
+
+			query = query.filter(
+				func.upper(
+					Transaction.status
+				) == "SUCCESS"
+			)
+
+		# -----------------------------------------------------
+		# FAILURE REASON FILTER
+		# -----------------------------------------------------
+
+		failure_map = {
+			"network": "NETWORK",
+			"bank": "BANK",
+			"funds": "INSUFFICIENT",
+			"auth": "AUTHENTICATION",
+			"gateway": "GATEWAY",
+		}
+
+		if failure_filter in failure_map:
+
+			query = query.filter(
+				Transaction.failure_reason.ilike(
+					f"%{failure_map[failure_filter]}%"
+				)
+			)
+
+		# -----------------------------------------------------
+		# PAYMENT METHOD FILTER
+		# -----------------------------------------------------
+
+		method_map = {
+			"upi": "UPI",
+			"card": "CARD",
+			"netbanking": "NET",
+			"wallet": "WALLET",
+		}
+
+		if method_filter in method_map:
+
+			query = query.filter(
+				Transaction.payment_method.ilike(
+					f"%{method_map[method_filter]}%"
+				)
+			)
+
+		# -----------------------------------------------------
+		# PAGINATION
+		# -----------------------------------------------------
+
+		pagination = (
+			query
+			.order_by(
+				Transaction.transaction_timestamp.desc()
+			)
+			.paginate(
+				page=page,
+				per_page=per_page,
+				error_out=False
+			)
 		)
+
+		rows = []
+
+		for transaction in pagination.items:
+
+			status = str(
+				transaction.status or ""
+			).upper()
+
+			if status == "SUCCESS":
+
+				display_status = "RECOVERED"
+
+			elif status == "FAILED":
+
+				if (
+					transaction.retry_count is not None
+					and transaction.retry_count < 3
+				):
+
+					display_status = "RECOVERABLE"
+
+				else:
+
+					display_status = "FAILED"
+
+			else:
+
+				display_status = status
+
+			rows.append(
+				{
+					"transaction_id":
+						transaction.transaction_id,
+
+					"customer_id":
+						(
+							transaction.customer.customer_id
+							if transaction.customer
+							else None
+						),
+
+					"amount":
+						float(
+							transaction.amount or 0
+						),
+
+					"payment_method":
+						transaction.payment_method,
+
+					"failure_reason":
+						transaction.failure_reason,
+
+					"recovery_probability":
+						None,
+
+					"status":
+						display_status,
+
+					"retry_count":
+						transaction.retry_count,
+
+					"timestamp":
+						(
+							transaction.transaction_timestamp.isoformat()
+							if transaction.transaction_timestamp
+							else None
+						),
+				}
+			)
 
 		return jsonify(
 			{
 				"success": True,
-				"data": transaction,
+
+				"data": rows,
+
+				"pagination": {
+					"page":
+						pagination.page,
+
+					"per_page":
+						pagination.per_page,
+
+					"total":
+						pagination.total,
+
+					"total_pages":
+						pagination.pages,
+				},
 			}
 		)
-
 
 	# =========================================================
 # CUSTOMERS
