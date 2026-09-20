@@ -16,7 +16,9 @@ def _safe_float(value, default=0.0):
     try:
         if value is None:
             return default
+
         return float(value)
+
     except (TypeError, ValueError):
         return default
 
@@ -39,8 +41,13 @@ def _format_currency(value):
 def _feature_row(transaction):
     customer = transaction.customer
 
-    successful_payments = int(customer.successful_payments or 0)
-    failed_payments = int(customer.failed_payments or 0)
+    successful_payments = int(
+        customer.successful_payments or 0
+    )
+
+    failed_payments = int(
+        customer.failed_payments or 0
+    )
 
     historical_success_rate = _safe_float(
         customer.historical_success_rate
@@ -48,13 +55,16 @@ def _feature_row(transaction):
 
     customer_age_days = 0
 
-    if customer.customer_since and transaction.transaction_timestamp:
+    if (
+        customer.customer_since
+        and transaction.transaction_timestamp
+    ):
         customer_age_days = max(
             0,
             (
                 transaction.transaction_timestamp
                 - customer.customer_since
-            ).days
+            ).days,
         )
 
     hour = (
@@ -72,13 +82,17 @@ def _feature_row(transaction):
     previous_recovery_success = 0
 
     for outcome in transaction.recovery_outcomes:
-        if _safe_float(outcome.amount_recovered) > 0:
+        if _safe_float(
+            outcome.amount_recovered
+        ) > 0:
             previous_recovery_success = 1
             break
 
     high_value_customer = (
         1
-        if _safe_float(customer.customer_value) >= 100000
+        if _safe_float(
+            customer.customer_value
+        ) >= 100000
         else 0
     )
 
@@ -88,17 +102,31 @@ def _feature_row(transaction):
         "successful_payments": successful_payments,
         "failed_payments": failed_payments,
         "historical_success_rate": historical_success_rate,
-        "customer_value": _safe_float(customer.customer_value),
-        "amount": _safe_float(transaction.amount),
+        "customer_value": _safe_float(
+            customer.customer_value
+        ),
+        "amount": _safe_float(
+            transaction.amount
+        ),
         "payment_method": transaction.payment_method,
         "merchant_category": transaction.merchant_category,
-        "subscription_status": transaction.subscription_status or "UNKNOWN",
-        "retry_count": int(transaction.retry_count or 0),
+        "subscription_status": (
+            transaction.subscription_status
+            or "UNKNOWN"
+        ),
+        "retry_count": int(
+            transaction.retry_count or 0
+        ),
         "hour": hour,
         "day_of_week": day_of_week,
-        "failure_reason": transaction.failure_reason or "UNKNOWN",
+        "failure_reason": (
+            transaction.failure_reason
+            or "UNKNOWN"
+        ),
         "high_value_customer": high_value_customer,
-        "previous_recovery_success": previous_recovery_success,
+        "previous_recovery_success": (
+            previous_recovery_success
+        ),
         "response_code": None,
     }
 
@@ -107,19 +135,28 @@ def _load_failed_transactions():
     return (
         Transaction.query
         .options(
-            joinedload(Transaction.customer),
-            joinedload(Transaction.recovery_outcomes),
+            joinedload(
+                Transaction.customer
+            ),
+            joinedload(
+                Transaction.recovery_outcomes
+            ),
         )
         .filter(
             Transaction.status.ilike("FAILED")
         )
-        .order_by(Transaction.transaction_timestamp.desc())
+        .order_by(
+            Transaction.transaction_timestamp.desc()
+        )
         .all()
     )
 
 
 def _get_recovery_amounts(transactions):
-    transaction_ids = [transaction.id for transaction in transactions]
+    transaction_ids = [
+        transaction.id
+        for transaction in transactions
+    ]
 
     if not transaction_ids:
         return {}
@@ -127,7 +164,9 @@ def _get_recovery_amounts(transactions):
     outcomes = (
         RecoveryOutcome.query
         .filter(
-            RecoveryOutcome.transaction_id.in_(transaction_ids)
+            RecoveryOutcome.transaction_id.in_(
+                transaction_ids
+            )
         )
         .all()
     )
@@ -136,30 +175,47 @@ def _get_recovery_amounts(transactions):
 
     for outcome in outcomes:
         transaction_id = outcome.transaction_id
-        amount = _safe_float(outcome.amount_recovered)
+
+        amount = _safe_float(
+            outcome.amount_recovered
+        )
 
         recovery_amounts[transaction_id] = (
-            recovery_amounts.get(transaction_id, 0.0)
+            recovery_amounts.get(
+                transaction_id,
+                0.0,
+            )
             + amount
         )
 
     return recovery_amounts
 
 
-def _action_for_transaction(transaction, probability):
+def _action_for_transaction(
+    transaction,
+    probability,
+):
     reason = str(
         transaction.failure_reason or ""
     ).upper()
 
-    retry_count = int(transaction.retry_count or 0)
+    retry_count = int(
+        transaction.retry_count or 0
+    )
 
     if retry_count >= 3:
         return "CUSTOMER REMINDER"
 
-    if "AUTH" in reason or "VERIFICATION" in reason:
+    if (
+        "AUTH" in reason
+        or "VERIFICATION" in reason
+    ):
         return "PAYMENT LINK"
 
-    if "INSUFFICIENT" in reason or "BALANCE" in reason:
+    if (
+        "INSUFFICIENT" in reason
+        or "BALANCE" in reason
+    ):
         return "PAYMENT LINK"
 
     if probability >= 65:
@@ -203,32 +259,44 @@ def _simulate(
             transaction.retry_count or 0
         )
 
-        if retry_count > max_retries:
+        if retry_count >= max_retries:
             continue
 
-        amount = _safe_float(transaction.amount)
+        amount = _safe_float(
+            transaction.amount
+        )
 
         expected_recovery = (
             amount * probability / 100
         )
 
-        recommended_action = _action_for_transaction(
-            transaction,
-            probability,
+        recommended_action = (
+            _action_for_transaction(
+                transaction,
+                probability,
+            )
         )
 
-        recovered_amount = recovery_amounts.get(
-            transaction.id,
-            0.0,
+        recovered_amount = (
+            recovery_amounts.get(
+                transaction.id,
+                0.0,
+            )
         )
 
         item = {
             "transaction": transaction,
             "probability": probability,
             "amount": amount,
-            "expected_recovery": expected_recovery,
-            "recommended_action": recommended_action,
-            "recovered_amount": recovered_amount,
+            "expected_recovery": (
+                expected_recovery
+            ),
+            "recommended_action": (
+                recommended_action
+            ),
+            "recovered_amount": (
+                recovered_amount
+            ),
             "retry_count": retry_count,
         }
 
@@ -245,17 +313,25 @@ def _simulate(
             if recovered_amount > 0:
                 recovered.append(item)
 
-    return eligible, attempted, recovered
+    return (
+        eligible,
+        attempted,
+        recovered,
+    )
 
 
-def _build_action_distribution(attempted):
+def _build_action_distribution(
+    attempted,
+):
     if not attempted:
         return []
 
     groups = {}
 
     for item in attempted:
-        action = item["recommended_action"]
+        action = item[
+            "recommended_action"
+        ]
 
         if action not in groups:
             groups[action] = {
@@ -265,10 +341,17 @@ def _build_action_distribution(attempted):
             }
 
         groups[action]["count"] += 1
-        groups[action]["revenue"] += item["amount"]
-        groups[action]["recovered"] += item["recovered_amount"]
+
+        groups[action]["revenue"] += (
+            item["amount"]
+        )
+
+        groups[action]["recovered"] += (
+            item["recovered_amount"]
+        )
 
     total = len(attempted)
+
     results = []
 
     for action, values in groups.items():
@@ -280,16 +363,22 @@ def _build_action_distribution(attempted):
                 "action": action,
                 "count": values["count"],
                 "share": round(
-                    values["count"] / total * 100,
+                    values["count"]
+                    / total
+                    * 100,
                     1,
                 ),
                 "revenue": revenue,
-                "revenue_display": _format_currency(
-                    revenue
+                "revenue_display": (
+                    _format_currency(
+                        revenue
+                    )
                 ),
                 "recovered": recovered,
-                "recovered_display": _format_currency(
-                    recovered
+                "recovered_display": (
+                    _format_currency(
+                        recovered
+                    )
                 ),
             }
         )
@@ -309,7 +398,9 @@ def _build_funnel(
     recovered,
 ):
     failed_revenue = sum(
-        _safe_float(transaction.amount)
+        _safe_float(
+            transaction.amount
+        )
         for transaction in failed
     )
 
@@ -362,6 +453,8 @@ def _build_funnel(
             ),
         },
     ]
+
+
 def run_simulation(
     min_probability=40,
     max_retries=3,
@@ -370,7 +463,10 @@ def run_simulation(
     min_probability = max(
         0.0,
         min(
-            _safe_float(min_probability, 40.0),
+            _safe_float(
+                min_probability,
+                40.0,
+            ),
             100.0,
         ),
     )
@@ -397,7 +493,9 @@ def run_simulation(
         return {
             "parameters": {
                 "batch_size": batch_size,
-                "min_probability": min_probability,
+                "min_probability": (
+                    min_probability
+                ),
                 "max_retries": max_retries,
             },
             "summary": {
@@ -422,8 +520,15 @@ def run_simulation(
             ),
             "actions": [],
             "insight": {
-                "title": "No failed payments available",
-                "description": "There are no failed transactions available for simulation.",
+                "title": (
+                    "No failed payments "
+                    "available"
+                ),
+                "description": (
+                    "There are no failed "
+                    "transactions available "
+                    "for simulation."
+                ),
             },
         }
 
@@ -436,11 +541,17 @@ def run_simulation(
         feature_rows
     )
 
-    recovery_amounts = _get_recovery_amounts(
-        failed
+    recovery_amounts = (
+        _get_recovery_amounts(
+            failed
+        )
     )
 
-    eligible, attempted, recovered = _simulate(
+    (
+        eligible,
+        attempted,
+        recovered,
+    ) = _simulate(
         failed,
         predictions,
         min_probability,
@@ -448,12 +559,19 @@ def run_simulation(
         recovery_amounts,
     )
 
+    # Full transaction amount currently exposed
+    # to recovery among eligible opportunities.
     revenue_at_risk = sum(
-        item["expected_recovery"]
+        item["amount"]
         for item in eligible
     )
 
-    expected_recovery = revenue_at_risk
+    # Probability-weighted amount expected
+    # to be recovered from those opportunities.
+    expected_recovery = sum(
+        item["expected_recovery"]
+        for item in eligible
+    )
 
     recovered_revenue = sum(
         item["recovered_amount"]
@@ -475,7 +593,8 @@ def run_simulation(
 
     guardrail_blocked = max(
         0,
-        len(eligible) - len(attempted),
+        len(eligible)
+        - len(attempted),
     )
 
     actions = _build_action_distribution(
@@ -492,40 +611,54 @@ def run_simulation(
     return {
         "parameters": {
             "batch_size": batch_size,
-            "min_probability": min_probability,
+            "min_probability": (
+                min_probability
+            ),
             "max_retries": max_retries,
         },
         "summary": {
             "failed_payments": len(failed),
-            "eligible_opportunities": len(eligible),
+            "eligible_opportunities": len(
+                eligible
+            ),
             "revenue_at_risk": round(
                 revenue_at_risk,
                 2,
             ),
-            "revenue_at_risk_display": _format_currency(
-                revenue_at_risk
+            "revenue_at_risk_display": (
+                _format_currency(
+                    revenue_at_risk
+                )
             ),
             "expected_recovery": round(
                 expected_recovery,
                 2,
             ),
-            "expected_recovery_display": _format_currency(
-                expected_recovery
+            "expected_recovery_display": (
+                _format_currency(
+                    expected_recovery
+                )
             ),
             "recovered_revenue": round(
                 recovered_revenue,
                 2,
             ),
-            "recovered_revenue_display": _format_currency(
-                recovered_revenue
+            "recovered_revenue_display": (
+                _format_currency(
+                    recovered_revenue
+                )
             ),
             "recovery_rate": round(
                 recovery_rate,
                 1,
             ),
             "attempted": len(attempted),
-            "recovered_transactions": len(recovered),
-            "guardrail_blocked": guardrail_blocked,
+            "recovered_transactions": len(
+                recovered
+            ),
+            "guardrail_blocked": (
+                guardrail_blocked
+            ),
         },
         "funnel": funnel,
         "actions": actions,
@@ -540,7 +673,8 @@ def run_simulation(
                 f"{len(attempted)} opportunities "
                 f"passed guardrail validation and "
                 f"{_format_currency(recovered_revenue)} "
-                f"was recovered in the simulated batch."
+                f"was recovered in the simulated "
+                f"batch."
             ),
         },
     }

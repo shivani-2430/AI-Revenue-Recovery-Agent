@@ -20,7 +20,7 @@ from models import (
 )
 from flask import render_template, request, redirect, url_for, jsonify
 from services.customer_service import get_customers
-
+from services.ai_strategy_service import generate_strategy
 from services.mock_transaction_service import (
     get_transaction_details,
 )
@@ -48,13 +48,14 @@ from services.mock_recovery_simulator_service import (
 from services.model_intelligence_service import (
     get_model_intelligence,
 )
-from services.mock_audit_trail_service import (
-	get_audit_trail,
+from services.audit_trail_service import (
+    get_audit_trail,
 )
-from services.mock_policies_service import (
-	get_policies,
-	update_policies,
-	reset_policies,
+from services.policies_service import (
+    get_policies,
+    update_policies,
+    reset_policies,
+    evaluate_guardrails,
 )
 from sqlalchemy import (
     func,
@@ -461,6 +462,7 @@ def register_routes(app):
 			"metric": metric,
 			"data": data
 		})
+		
 
 	# =========================================================
 	# TRANSACTIONS

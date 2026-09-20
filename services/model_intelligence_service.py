@@ -9,6 +9,8 @@ try:
 except ImportError:
     joblib = None
 
+from models.policy import Policy
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,6 +29,7 @@ def _load_json_file(path):
             encoding="utf-8",
         ) as file:
             return json.load(file)
+
     except (
         json.JSONDecodeError,
         OSError,
@@ -38,18 +41,16 @@ def _load_model():
     if not MODEL_PATH.exists():
         return None
 
-    # Try joblib first because sklearn models are commonly
-    # saved with joblib.dump().
     if joblib is not None:
         try:
             return joblib.load(MODEL_PATH)
         except Exception:
             pass
 
-    # Fallback to standard pickle.
     try:
         with MODEL_PATH.open("rb") as file:
             return pickle.load(file)
+
     except Exception:
         return None
 
@@ -60,39 +61,53 @@ def _load_dataset():
 
     try:
         return pd.read_csv(DATASET_PATH)
+
     except Exception:
         return pd.DataFrame()
 
 
-def _get_model_name(model):
+def _get_model_name(
+    metrics,
+    model,
+):
+    model_name = metrics.get("model")
+
+    if isinstance(
+        model_name,
+        dict,
+    ):
+        model_name = model_name.get("name")
+
+    if model_name:
+        return str(model_name)
+
     if model is None:
         return "Recovery Intelligence"
 
-    model_name = type(model).__name__
-
-    if hasattr(model, "named_steps"):
-        try:
-            steps = list(model.named_steps.keys())
-
-            if steps:
-                final_step = model.named_steps[steps[-1]]
-                model_name = type(final_step).__name__
-        except Exception:
-            pass
-
-    return model_name
+    return type(model).__name__
 
 
-def _get_features(metrics, model):
+def _get_features(
+    metrics,
+    model,
+):
     features = metrics.get("features")
 
-    if isinstance(features, list) and features:
+    if isinstance(
+        features,
+        list,
+    ) and features:
+
         return [
             str(feature)
             for feature in features
         ]
 
-    if isinstance(features, dict):
+    if isinstance(
+        features,
+        dict,
+    ):
+
         return [
             str(feature)
             for feature in features.keys()
@@ -105,28 +120,12 @@ def _get_features(metrics, model):
                 model,
                 "feature_names_in_",
             ):
+
                 return [
                     str(feature)
                     for feature in model.feature_names_in_
                 ]
-        except Exception:
-            pass
 
-        try:
-            if hasattr(
-                model,
-                "named_steps",
-            ):
-                for step in model.named_steps.values():
-
-                    if hasattr(
-                        step,
-                        "feature_names_in_",
-                    ):
-                        return [
-                            str(feature)
-                            for feature in step.feature_names_in_
-                        ]
         except Exception:
             pass
 
@@ -134,33 +133,26 @@ def _get_features(metrics, model):
 
 
 def _get_performance(metrics):
-    performance = metrics.get(
-        "performance",
-        {},
-    )
-
-    if not isinstance(
-        performance,
-        dict,
-    ):
-        return {}
+    """
+    model_metrics.json stores performance
+    metrics at the top level.
+    """
 
     return {
-        "precision": performance.get(
+        "accuracy": metrics.get(
+            "accuracy"
+        ),
+        "precision": metrics.get(
             "precision"
         ),
-        "recall": performance.get(
+        "recall": metrics.get(
             "recall"
         ),
-        "f1_score": performance.get(
-            "f1_score",
-            performance.get("f1"),
+        "f1_score": metrics.get(
+            "f1_score"
         ),
-        "roc_auc": performance.get(
-            "roc_auc",
-            performance.get(
-                "roc_auc_score"
-            ),
+        "roc_auc": metrics.get(
+            "roc_auc"
         ),
     }
 
@@ -175,9 +167,13 @@ def _get_class_distribution(
     )
 
     if (
-        isinstance(distribution, dict)
+        isinstance(
+            distribution,
+            dict,
+        )
         and distribution
     ):
+
         return distribution
 
     if dataset.empty:
@@ -196,12 +192,14 @@ def _get_class_distribution(
             )
             .to_dict()
         )
+
     except Exception:
         return {}
 
     result = {}
 
     for key, value in values.items():
+
         result[str(key)] = int(value)
 
     return result
@@ -223,6 +221,7 @@ def _get_confusion_matrix(metrics):
         matrix,
         list,
     ):
+
         return {
             "matrix": matrix,
         }
@@ -234,15 +233,32 @@ def _get_feature_importance(
     metrics,
     model,
 ):
+    """
+    Prefer feature importance metadata only when
+    it is already supplied by the metrics file.
+
+    Otherwise derive importance from the model.
+
+    If the model contains transformed/encoded
+    features that cannot be mapped reliably to the
+    original business feature names, expose the
+    transformed feature names instead of falsely
+    assigning them to unrelated business fields.
+    """
+
     importance = metrics.get(
         "feature_importance",
         [],
     )
 
     if (
-        isinstance(importance, list)
+        isinstance(
+            importance,
+            list,
+        )
         and importance
     ):
+
         return importance
 
     if model is None:
@@ -255,12 +271,14 @@ def _get_feature_importance(
             model,
             "named_steps",
         ):
+
             steps = list(
                 model.named_steps.values()
             )
 
             if steps:
                 estimator = steps[-1]
+
     except Exception:
         return []
 
@@ -274,23 +292,56 @@ def _get_feature_importance(
         values = (
             estimator.feature_importances_
         )
+
     except Exception:
         return []
 
-    features = _get_features(
-        metrics,
-        model,
-    )
+    transformed_features = []
+
+    try:
+        if hasattr(
+            model,
+            "get_feature_names_out",
+        ):
+
+            transformed_features = list(
+                model.get_feature_names_out()
+            )
+
+    except Exception:
+        transformed_features = []
+
+    features = transformed_features
+
+    if not features:
+
+        try:
+            if hasattr(
+                estimator,
+                "feature_names_in_",
+            ):
+
+                features = [
+                    str(feature)
+                    for feature
+                    in estimator.feature_names_in_
+                ]
+
+        except Exception:
+            features = []
 
     result = []
 
     for index, value in enumerate(values):
 
         if index < len(features):
+
             feature_name = features[index]
+
         else:
+
             feature_name = (
-                f"Feature {index + 1}"
+                f"Encoded Feature {index + 1}"
             )
 
         result.append(
@@ -313,19 +364,72 @@ def _get_feature_importance(
     return result
 
 
-def _get_threshold_policy(metrics):
-    policy = metrics.get(
-        "threshold_policy",
-        {},
+def _get_threshold_policy():
+    """
+    Load the active recovery decision policy
+    from PostgreSQL.
+
+    Model Intelligence should reflect the actual
+    RecoverAI policy configuration instead of
+    inventing a threshold from model metadata.
+    """
+
+    try:
+
+        policy = (
+            Policy.query
+            .order_by(
+                Policy.id.asc()
+            )
+            .first()
+        )
+
+    except Exception:
+        return {}
+
+    if policy is None:
+        return {}
+
+    minimum_probability = float(
+        policy.minimum_recovery_probability
     )
 
-    if isinstance(
-        policy,
-        dict,
-    ):
-        return policy
+    escalation_threshold = float(
+        policy.escalation_threshold
+    )
 
-    return {}
+    maximum_retry_count = int(
+        policy.maximum_retry_count
+    )
+
+    return {
+        "title": (
+            f"Recovery threshold: "
+            f"{minimum_probability:.0f}%"
+        ),
+
+        "threshold": minimum_probability,
+
+        "description": (
+            f"Recovery opportunities with an "
+            f"estimated recovery probability of "
+            f"{minimum_probability:.0f}% or higher "
+            f"can proceed through recovery guardrails. "
+            f"Probabilities at or above "
+            f"{escalation_threshold:.0f}% may receive "
+            f"priority handling. Maximum retries: "
+            f"{maximum_retry_count}."
+        ),
+
+        "minimum_recovery_probability":
+            minimum_probability,
+
+        "escalation_threshold":
+            escalation_threshold,
+
+        "maximum_retry_count":
+            maximum_retry_count,
+    }
 
 
 def get_model_intelligence():
@@ -344,7 +448,7 @@ def get_model_intelligence():
 
     features = _get_features(
         metrics,
-        model,
+        model
     )
 
     class_distribution = (
@@ -368,61 +472,38 @@ def get_model_intelligence():
     )
 
     threshold_policy = (
-        _get_threshold_policy(
-            metrics
-        )
+        _get_threshold_policy()
     )
 
-    model_metadata = metrics.get(
-        "model",
-        {},
+    model_name = _get_model_name(
+        metrics,
+        model,
     )
 
-    if not isinstance(
-        model_metadata,
-        dict,
-    ):
-        model_metadata = {}
-
-    model_name = model_metadata.get(
-        "name"
-    )
-
-    if not model_name:
-        model_name = _get_model_name(
-            model
-        )
-
-    model_version = (
-        model_metadata.get(
-            "version",
-            "v1",
-        )
+    model_version = metrics.get(
+        "version",
+        "v1",
     )
 
     prediction_target = (
-        model_metadata.get(
-            "target",
-            "Recovery Probability",
-        )
+        "Recovery Probability"
     )
 
     dataset_name = (
-        model_metadata.get(
-            "dataset",
-            DATASET_PATH.name,
-        )
+        DATASET_PATH.name
     )
 
     description = (
-        model_metadata.get(
-            "description",
-            (
-                "Machine learning model used "
-                "to estimate payment recovery "
-                "potential."
-            ),
-        )
+        "Machine learning model used "
+        "to estimate payment recovery "
+        "potential."
+    )
+
+    metrics_available = any(
+        value is not None
+        for key, value
+        in performance.items()
+        if key != "accuracy"
     )
 
     return {
@@ -433,15 +514,27 @@ def get_model_intelligence():
             "dataset": dataset_name,
             "description": description,
             "model_file": MODEL_PATH.name,
-            "model_available": model is not None,
+            "model_available": (
+                model is not None
+            ),
         },
+
         "performance": performance,
+
         "features": features,
-        "confusion_matrix": confusion_matrix,
-        "class_distribution": class_distribution,
-        "feature_importance": feature_importance,
-        "threshold_policy": threshold_policy,
-        "metrics_available": bool(
-            performance
-        ),
+
+        "confusion_matrix":
+            confusion_matrix,
+
+        "class_distribution":
+            class_distribution,
+
+        "feature_importance":
+            feature_importance,
+
+        "threshold_policy":
+            threshold_policy,
+
+        "metrics_available":
+            metrics_available,
     }

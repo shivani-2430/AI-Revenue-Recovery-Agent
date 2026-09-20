@@ -406,11 +406,15 @@ def _build_payment_methods(
 
 def _build_trend(
     transactions,
+    probabilities,
     recovery_amounts,
 ):
     grouped = {}
 
-    for transaction in transactions:
+    for transaction, probability in zip(
+        transactions,
+        probabilities,
+    ):
         timestamp = (
             transaction.transaction_timestamp
         )
@@ -434,8 +438,19 @@ def _build_trend(
             transaction.amount
         )
 
+        probability = _safe_float(
+            probability
+        )
+
         bucket["transactions"] += 1
+
         bucket["revenue_lost"] += amount
+
+        bucket["revenue_at_risk"] += (
+            amount
+            * probability
+            / 100
+        )
 
         bucket["recovered_revenue"] += (
             recovery_amounts.get(
@@ -452,31 +467,50 @@ def _build_trend(
         results.append(
             {
                 "date": str(date),
+
                 "transactions": bucket[
                     "transactions"
                 ],
+
                 "revenue_lost": round(
                     bucket["revenue_lost"],
                     2,
                 ),
+
                 "revenue_lost_display":
                     _format_currency(
                         bucket[
                             "revenue_lost"
                         ]
                     ),
+
                 "revenue_at_risk": round(
                     bucket[
                         "revenue_at_risk"
                     ],
                     2,
                 ),
+
+                "revenue_at_risk_display":
+                    _format_currency(
+                        bucket[
+                            "revenue_at_risk"
+                        ]
+                    ),
+
                 "recovered_revenue": round(
                     bucket[
                         "recovered_revenue"
                     ],
                     2,
                 ),
+
+                "recovered_revenue_display":
+                    _format_currency(
+                        bucket[
+                            "recovered_revenue"
+                        ]
+                    ),
             }
         )
 
@@ -811,6 +845,7 @@ def get_failure_intelligence():
 
     trend = _build_trend(
         failed,
+        probabilities,
         recovery_amounts,
     )
 
