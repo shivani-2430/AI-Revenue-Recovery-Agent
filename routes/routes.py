@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from flask import (
+	app,
 	render_template,
 	redirect,
 	url_for,
@@ -951,6 +952,171 @@ def register_routes(app):
 				}
 			), 500
 	# =========================================================
+	# AI STRATEGY API
+	# RECOVERAI
+	# =========================================================
+
+	@app.route(
+		"/api/ai-strategy/<transaction_id>",
+		methods=["GET"]
+	)
+	def ai_strategy_api(
+		transaction_id
+	):
+
+		try:
+
+			transaction = (
+				Transaction.query
+				.filter_by(
+					transaction_id=transaction_id
+				)
+				.first()
+			)
+
+			if not transaction:
+
+				return jsonify(
+					{
+						"success": False,
+						"error": "Transaction not found",
+					}
+				), 404
+
+			customer = transaction.customer
+
+			recovery_action = (
+				RecoveryAction.query
+				.filter_by(
+					transaction_id=transaction.id
+				)
+				.order_by(
+					RecoveryAction.created_at.desc()
+				)
+				.first()
+			)
+
+			if recovery_action:
+
+				recovery_probability = float(
+					recovery_action.recovery_probability
+				)
+
+				revenue_at_risk = float(
+					recovery_action.revenue_at_risk
+				)
+
+			else:
+
+				recovery_probability = None
+
+				revenue_at_risk = float(
+					transaction.amount
+				)
+
+			recovery_context = {
+				"transaction_id":
+					transaction.transaction_id,
+
+				"amount":
+					float(transaction.amount),
+
+				"payment_method":
+					transaction.payment_method,
+
+				"merchant_category":
+					transaction.merchant_category,
+
+				"failure_reason":
+					transaction.failure_reason,
+
+				"retry_count":
+					transaction.retry_count,
+
+				"subscription_status":
+					transaction.subscription_status,
+
+				"customer_id":
+					customer.customer_id,
+
+				"customer_segment":
+					customer.customer_segment,
+
+				"customer_value":
+					float(customer.customer_value),
+
+				"historical_success_rate":
+					customer.historical_success_rate,
+
+				"successful_payments":
+					customer.successful_payments,
+
+				"failed_payments":
+					customer.failed_payments,
+
+				"recovery_probability":
+					recovery_probability,
+
+				"revenue_at_risk":
+					revenue_at_risk,
+			}
+
+			priority = (
+				"HIGH"
+				if (
+					recovery_probability is not None
+					and recovery_probability >= 70
+				)
+				else "NORMAL"
+			)
+
+			strategy = generate_strategy(
+				recovery_context,
+				priority,
+			)
+
+			return jsonify(
+				{
+					"success": True,
+					"data": strategy,
+				}
+			)
+
+		except Exception as error:
+
+			app.logger.exception(
+				"AI Strategy API failed"
+			)
+
+			return jsonify(
+				{
+					"success": False,
+					"error":
+						"Unable to generate AI recovery strategy.",
+					"details":
+						str(error),
+				}
+			), 500
+		
+
+	# =========================================================
+	# AI STRATEGY PAGE
+	# RECOVERAI
+	# =========================================================
+
+	@app.route(
+		"/ai-strategy/<transaction_id>",
+		methods=["GET"]
+	)
+	def ai_strategy(
+		transaction_id
+	):
+
+		return render_template(
+			"strategy.html",
+			transaction_id=transaction_id
+		)
+# =========================================================
 # CUSTOMERS
 # BACKEND READY
 # =========================================================

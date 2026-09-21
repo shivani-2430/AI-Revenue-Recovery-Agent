@@ -39,6 +39,218 @@ class RecoveryState(TypedDict, total=False):
     final_strategy: dict
 
 
+def _fallback_diagnosis(context):
+    """
+    Deterministic fallback used when Gemini is unavailable.
+    Uses only supplied transaction facts.
+    """
+
+    failure_reason = (
+        context.get("failure_reason")
+        or "UNKNOWN"
+    )
+
+    payment_method = (
+        context.get("payment_method")
+        or "UNKNOWN"
+    )
+
+    retry_count = int(
+        context.get("retry_count") or 0
+    )
+
+    amount = float(
+        context.get("amount") or 0
+    )
+
+    probability = context.get(
+        "recovery_probability"
+    )
+
+    evidence = [
+        f"failure_reason: {failure_reason}",
+        f"payment_method: {payment_method}",
+        f"amount: {amount}",
+        f"retry_count: {retry_count}",
+    ]
+
+    if probability is not None:
+        evidence.append(
+            f"recovery_probability: {probability}"
+        )
+
+    return {
+        "diagnosis": (
+            f"The transaction failed with "
+            f"{failure_reason} while using "
+            f"{payment_method}. "
+            f"The current recovery context indicates "
+            f"{retry_count} previous retry attempt(s)."
+        ),
+        "confidence": 0.70,
+        "evidence": evidence,
+    }
+
+
+def _fallback_actions(context, priority):
+    """
+    Deterministic recovery actions used when Gemini
+    is unavailable.
+    """
+
+    failure_reason = (
+        context.get("failure_reason")
+        or "UNKNOWN"
+    )
+
+    retry_count = int(
+        context.get("retry_count") or 0
+    )
+
+    probability = context.get(
+        "recovery_probability"
+    )
+
+    amount = float(
+        context.get("amount") or 0
+    )
+
+    probability_percent = None
+
+    if probability is not None:
+
+        probability_percent = float(
+            probability
+        )
+
+        if probability_percent <= 1:
+            probability_percent *= 100
+
+    actions = []
+
+    if (
+        probability_percent is not None
+        and probability_percent >= 70
+        and retry_count < 3
+    ):
+
+        actions.append(
+            {
+                "action": "RETRY_PAYMENT",
+                "reason": (
+                    "The transaction has a high "
+                    "recovery probability and remains "
+                    "within the retry limit."
+                ),
+                "priority": "HIGH",
+                "expected_impact": (
+                    f"Potential recovery of approximately "
+                    f"{probability_percent:.1f}% of the "
+                    f"₹{amount:,.2f} revenue at risk."
+                )
+            }
+        )
+
+    elif (
+        probability_percent is not None
+        and probability_percent >= 40
+        and retry_count < 3
+    ):
+
+        actions.append(
+            {
+                "action": "SEND_PAYMENT_LINK",
+                "reason": (
+                    "The transaction has meaningful "
+                    "recovery potential and remains "
+                    "eligible for controlled recovery."
+                ),
+                "priority": priority,
+                "expected_impact": (
+                    "Provides the customer with another "
+                    "payment path without claiming that "
+                    "the payment has already succeeded."
+                )
+            }
+        )
+
+    elif retry_count >= 3:
+
+        actions.append(
+            {
+                "action": "STOP_RECOVERY",
+                "reason": (
+                    "The transaction has reached the "
+                    "maximum retry limit."
+                ),
+                "priority": "HIGH",
+                "expected_impact": (
+                    "Prevents additional automated "
+                    "recovery attempts."
+                )
+            }
+        )
+
+    else:
+
+        actions.append(
+            {
+                "action": "ESCALATE_TO_HUMAN",
+                "reason": (
+                    f"The failure reason is "
+                    f"{failure_reason} and the available "
+                    "recovery probability does not "
+                    "support an automatic recovery action."
+                ),
+                "priority": "MEDIUM",
+                "expected_impact": (
+                    "Allows manual review without "
+                    "performing an unsupported automated action."
+                )
+            }
+        )
+
+    return actions
+
+
+def _fallback_final_strategy(
+    context,
+    priority,
+    actions
+):
+    """
+    Deterministic final strategy used when Gemini
+    is unavailable.
+    """
+
+    if not actions:
+
+        return {
+            "recommended_action":
+                "STOP_RECOVERY",
+            "reason":
+                "No safe automated recovery action "
+                "was generated.",
+            "expected_recovery_impact":
+                "No automated recovery should be attempted.",
+            "confidence":
+                0.70,
+        }
+
+    selected = actions[0]
+
+    return {
+        "recommended_action":
+            selected["action"],
+        "reason":
+            selected["reason"],
+        "expected_recovery_impact":
+            selected["expected_impact"],
+        "confidence":
+            0.70,
+    }
+
+
 def call_gemini(prompt, schema):
 
     last_error = None
@@ -72,10 +284,17 @@ def call_gemini(prompt, schema):
 
             error_text = str(error)
 
+            if "429" in error_text:
+
+                raise RuntimeError(
+                    "GEMINI_QUOTA_EXCEEDED"
+                )
+
             if (
                 "503" not in error_text
                 and "UNAVAILABLE" not in error_text
             ):
+
                 raise
 
             if attempt < 2:
@@ -148,10 +367,24 @@ Do not recommend an action yet.
         ]
     }
 
-    result = call_gemini(
-        prompt,
-        schema
-    )
+    try:
+
+        result = call_gemini(
+            prompt,
+            schema
+        )
+
+    except Exception as error:
+
+        print(
+            "Gemini diagnosis unavailable. "
+            "Using deterministic fallback:",
+            error
+        )
+
+        result = _fallback_diagnosis(
+            context
+        )
 
     state["diagnosis"] = result
 
@@ -299,17 +532,37 @@ expected_impact
         ]
     }
 
-    result = call_gemini(
-        prompt,
-        schema
-    )
+    try:
+
+        result = call_gemini(
+            prompt,
+            schema
+        )
+
+        actions = result.get(
+            "actions",
+            []
+        )
+
+    except Exception as error:
+
+        print(
+            "Gemini action planner unavailable. "
+            "Using deterministic fallback:",
+            error
+        )
+
+        actions = _fallback_actions(
+            context,
+            state.get(
+                "priority",
+                "NORMAL"
+            )
+        )
 
     state[
         "recovery_actions"
-    ] = result.get(
-        "actions",
-        []
-    )
+    ] = actions
 
     return state
 
@@ -403,10 +656,26 @@ confidence
         ]
     }
 
-    result = call_gemini(
-        prompt,
-        schema
-    )
+    try:
+
+        result = call_gemini(
+            prompt,
+            schema
+        )
+
+    except Exception as error:
+
+        print(
+            "Gemini final strategy unavailable. "
+            "Using deterministic fallback:",
+            error
+        )
+
+        result = _fallback_final_strategy(
+            context,
+            priority,
+            actions
+        )
 
     state[
         "final_strategy"
