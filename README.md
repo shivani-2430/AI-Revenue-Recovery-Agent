@@ -1,284 +1,201 @@
-#  Smart Failure Detection using Machine Learning
+# RecoverAI
 
-##  Project Overview
+### AI-Powered Revenue Recovery Platform
 
-Smart Failure Detection using Machine Learning is an AI-powered web application developed as part of the **Infosys Springboard Internship Program**.
+RecoverAI is an AI-powered payment recovery platform designed to identify failed payments, estimate recovery probability, apply recovery guardrails, generate intelligent recovery strategies, and execute recovery actions through payment links.
 
-The application helps organizations, startup founders, entrepreneurs, and business analysts evaluate the potential risk associated with software projects before implementation.
-
-The system collects project information, stores it securely in a PostgreSQL database, and applies a trained **Random Forest Machine Learning model** to predict the project's risk level (**Low, Medium, or High**). It further provides risk assessment, AI recommendations, market intelligence, AI decision simulation, and an executive report to support better business decisions.
+The platform combines machine learning, AI reasoning, policy-based guardrails, PostgreSQL, and Razorpay payment infrastructure into an end-to-end automated revenue recovery workflow.
 
 ---
 
-#  Problem Statement
+## Overview
 
-Many software projects fail because of poor planning, inadequate budgeting, unrealistic timelines, and ineffective resource allocation.
+Failed payments create immediate revenue risk for businesses, but not every failed transaction should be treated in the same way.
 
-Organizations often struggle to identify project risks during the planning stage, leading to increased costs and project failures.
+RecoverAI analyzes failed transactions using historical customer behavior, transaction characteristics, payment information, retry history, and other features to estimate the probability of successful recovery.
 
-This project addresses these challenges by combining machine learning with project analytics to estimate project risk and provide actionable recommendations before execution.
+Based on this prediction, the platform:
 
----
-
-#  Features
-
--  Project Registration
--  AI-Powered Risk Prediction
--  Random Forest Machine Learning Model
--  Risk Assessment Dashboard
--  AI Recommendations
--  Market Intelligence
--  AI Decision Simulator
--  Executive Report
--  PostgreSQL Database Integration
--  Responsive User Interface
+1. Identifies eligible failed transactions
+2. Predicts recovery probability using machine learning
+3. Calculates revenue at risk and expected recovery
+4. Applies recovery policies and guardrails
+5. Generates an AI-powered recovery strategy
+6. Determines the appropriate recovery action
+7. Executes approved recovery actions
+8. Creates Razorpay payment links when applicable
+9. Receives payment webhook events
+10. Reconciles successful payments with the original transaction
+11. Updates recovery outcomes, customer statistics, and audit records
 
 ---
 
-#  Machine Learning Module
+## Problem Statement
 
-### Algorithm Used
+Payment failures can result from:
 
-- Random Forest Classifier
+- Bank declines
+- Authentication failures
+- Network errors
+- Gateway timeouts
+- Transaction limits
+- Other payment-related failures
 
-### Input Features
+Traditional payment systems often treat these failures uniformly.
 
-- Budget
-- Team Size
-- Timeline
-- Priority
-- Domain
-
-### Output
-
-- 🟢 Low Risk
-- 🟡 Medium Risk
-- 🔴 High Risk
-
-### Libraries Used
-
-- Scikit-learn
-- Pandas
-- NumPy
-- Joblib
+RecoverAI introduces an intelligent recovery workflow that evaluates each failed transaction individually and determines whether it should be retried, redirected to a payment link, escalated, or stopped according to machine learning predictions and business policies.
 
 ---
 
-#  Technology Stack
+## Key Features
 
-| Category | Technology |
-|----------|------------|
-| Backend | Python, Flask |
-| Frontend | HTML5, CSS3, JavaScript, Jinja2 |
-| Database | PostgreSQL |
-| ORM | SQLAlchemy |
-| Machine Learning | Random Forest |
-| Data Processing | Pandas, NumPy |
-| ML Utilities | Joblib |
-| Report Generation | ReportLab |
-| Icons | Font Awesome |
-| Deployment | Render |
+### 1. Machine Learning Recovery Prediction
+
+A Random Forest Classifier estimates the probability that a failed transaction can be successfully recovered.
+
+The model uses transaction and customer-related features including:
+
+- Transaction amount
+- Payment method
+- Merchant category
+- Failure reason
+- Retry count
+- Customer segment
+- Customer age
+- Successful payments
+- Failed payments
+- Historical success rate
+- Customer value
+- Subscription status
+- Transaction time
+- Day of week
+- High-value customer indicator
+- Previous recovery success
 
 ---
 
-#  System Architecture
+### 2. Revenue Risk Analysis
+
+RecoverAI calculates:
+
+- Revenue at risk
+- Expected recovery
+- Recovery probability
+- Recovered revenue
+- Recovery rate
+
+This allows businesses to distinguish between the total failed amount and the portion that is realistically recoverable.
+
+---
+
+### 3. AI Recovery Strategy
+
+The AI Strategy engine combines:
+
+- Gemini
+- LangGraph
+- Retrieval-Augmented Generation (RAG)
+- Machine learning predictions
+- Customer and transaction context
+- Recovery policies
+
+The system generates:
+
+- Diagnosis
+- Evidence
+- Recommended recovery action
+- Reasoning
+- Expected recovery impact
+- Confidence
+
+The AI strategy is constrained by the recovery context and does not independently claim that a payment has been recovered or an action has been executed.
+
+---
+
+### 4. Recovery Guardrails
+
+Recovery decisions are evaluated against configurable business policies.
+
+Current policy controls include:
+
+- Minimum recovery probability
+- Maximum retry count
+- Retry cooldown
+- Maximum automatic retry amount
+- Escalation threshold
+- High-value transaction threshold
+- Allowed payment methods
+- Stop after successful recovery
+- Stop after maximum retries
+- Stop for low recovery probability
+- Stop for high-value transactions requiring review
+
+---
+
+### 5. Recovery Queue
+
+The Recovery Queue identifies failed transactions that are eligible for recovery.
+
+Each transaction is evaluated using:
+
+- Recovery probability
+- Transaction amount
+- Revenue at risk
+- Expected recovery
+- Retry history
+- Customer information
+- Recovery priority
+
+Transactions can be categorized into different recovery priorities based on predicted recovery probability.
+
+---
+
+### 6. Recovery Simulator
+
+The Recovery Simulator allows recovery opportunities to be analyzed before actual execution.
+
+It provides:
+
+- Failed payment count
+- Recovery opportunities
+- Guardrail-approved opportunities
+- Revenue at risk
+- Expected recovery
+- Action distribution
+
+Supported recovery actions include:
+
+- Smart Retry
+- Payment Link
+- Customer Reminder
+
+---
+
+### 7. Automated Recovery Execution
+
+Approved recovery actions can move through the execution pipeline.
+
+The execution workflow:
 
 ```text
-                User
-                  │
-                  ▼
-          HTML / CSS Frontend
-                  │
-                  ▼
-            Flask Backend
-                  │
-      ┌───────────┴───────────┐
-      ▼                       ▼
-PostgreSQL Database     Random Forest Model
-      │                       │
-      └───────────┬───────────┘
-                  ▼
-          Risk Assessment
-                  │
-                  ▼
-        AI Recommendations
-                  │
-                  ▼
-       Market Intelligence
-                  │
-                  ▼
-      AI Decision Simulator
-                  │
-                  ▼
-          Executive Report
-```
-
----
-
-#  Project Workflow
-
-1. User submits project details.
-2. Project information is stored in PostgreSQL.
-3. The Random Forest model predicts the project risk level.
-4. Risk Assessment is generated.
-5. AI Recommendations are provided.
-6. Market Intelligence is displayed.
-7. AI Decision Simulator evaluates different project scenarios.
-8. Executive Report summarizes the complete analysis.
-
----
-
-#  Project Structure
-
-```text
-Smart-Failure-Detection-ML
-│
-├── app.py
-├── config.py
-├── requirements.txt
-├── README.md
-│
-├── database/
-├── models/
-├── routes/
-├── services/
-├── static/
-│
-├── templates/
-│
-└── ml/
-    ├── dataset.csv
-    ├── train_model.py
-    ├── predict.py
-    ├── model.pkl
-    ├── domain_encoder.pkl
-    ├── priority_encoder.pkl
-    └── risk_encoder.pkl
-```
-
----
-
-# ⚙ Installation
-
-### Clone Repository
-
-```bash
-git clone <repository-url>
-cd Smart-Failure-Detection-ML
-```
-
-### Create Virtual Environment
-
-```bash
-python -m venv venv
-```
-
-### Activate Virtual Environment
-
-Windows
-
-```bash
-venv\Scripts\activate
-```
-
-Linux / macOS
-
-```bash
-source venv/bin/activate
-```
-
-### Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### Configure PostgreSQL
-
-Update the PostgreSQL connection details inside **config.py**.
-
-### Run Application
-
-```bash
-python app.py
-```
-
-Open
-
-```
-http://127.0.0.1:5000
-```
-
----
-
-#  Application Modules
-
-- Project Registration
-- Risk Assessment
-- AI Recommendations
-- Market Intelligence
-- AI Decision Simulator
-- Executive Report
-
----
-
-#  Machine Learning Workflow
-
-```text
-Project Details
-        │
-        ▼
-Data Preprocessing
-        │
-        ▼
-Feature Encoding
-        │
-        ▼
-Random Forest Classifier
-        │
-        ▼
-Risk Prediction
-        │
-        ▼
-Low / Medium / High Risk
-```
-
----
-
-#  Target Users
-
-- Startup Founders
-- Entrepreneurs
-- Business Analysts
-- Investors
-- Incubation Centers
-- Project Managers
-
----
-
-#  Future Enhancements
-
-- Live Market Data Integration
-- XGBoost-Based Risk Prediction
-- Deep Learning Models
-- User Authentication
-- Docker Containerization
-- Cloud-Based Model Retraining
-- Interactive Analytics Dashboard
-- REST API Integration
-
----
-
-#  Developed By
-
-**Shivani Tangudu**
-
-B.Tech – Artificial Intelligence & Machine Learning
-
-Infosys Springboard Internship Project
-
----
-
-#  License
-
-This project was developed for educational and internship purposes under the **Infosys Springboard Internship Program**.
+Failed Transaction
+        ↓
+ML Recovery Prediction
+        ↓
+AI Recovery Strategy
+        ↓
+Guardrail Evaluation
+        ↓
+Recovery Action
+        ↓
+Execution
+        ↓
+Razorpay Payment Link
+        ↓
+Customer Payment
+        ↓
+Webhook
+        ↓
+Payment Reconciliation
+        ↓
+Recovery Outcome

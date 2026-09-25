@@ -1,0 +1,207 @@
+
+### Important
+
+That `requirements.txt` block is a **README documentation list**, not a replacement for your actual `requirements.txt`.
+
+Your actual `requirements.txt` should remain whatever dependencies the project currently uses. Don't overwrite it just because README decided to become a package manager. 😭
+
+---
+
+# 2. System Architecture
+
+I would replace the previous architecture section completely with this more accurate version:
+
+```markdown
+## System Architecture
+
+RecoverAI follows a layered architecture that connects the web interface, Flask backend, machine learning model, AI strategy engine, recovery policy system, PostgreSQL database, and Razorpay payment infrastructure.
+
+```text
+                              ┌──────────────────────────┐
+                              │        User / Admin      │
+                              └────────────┬─────────────┘
+                                           │
+                                           ▼
+                              ┌──────────────────────────┐
+                              │      RecoverAI Frontend   │
+                              │                          │
+                              │ Dashboard                │
+                              │ Transactions             │
+                              │ Recovery Queue           │
+                              │ AI Decisions             │
+                              │ AI Strategy              │
+                              │ Customers                │
+                              │ Policies                 │
+                              │ Model Intelligence       │
+                              │ Failure Intelligence     │
+                              │ Audit Trail              │
+                              │ Recovery Simulator       │
+                              └────────────┬─────────────┘
+                                           │
+                                      HTTP / REST
+                                           │
+                                           ▼
+                    ┌────────────────────────────────────────────┐
+                    │             Flask Backend                  │
+                    │                                            │
+                    │              routes/routes.py               │
+                    │                                            │
+                    │ Dashboard APIs                              │
+                    │ Transaction APIs                            │
+                    │ Recovery APIs                               │
+                    │ AI Strategy API                             │
+                    │ Customer APIs                               │
+                    │ Policy APIs                                 │
+                    │ Model Intelligence APIs                     │
+                    │ Failure Intelligence APIs                   │
+                    │ Razorpay Webhook                            │
+                    └───────────────┬────────────────────────────┘
+                                    │
+                ┌───────────────────┼────────────────────┐
+                │                   │                    │
+                ▼                   ▼                    ▼
+      ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+      │ Recovery        │  │ AI Strategy     │  │ Policy &        │
+      │ Services        │  │ Engine          │  │ Guardrails      │
+      │                 │  │                 │  │                 │
+      │ Recovery Queue  │  │ Gemini          │  │ Probability     │
+      │ Recovery        │  │ LangGraph       │  │ Retry Count     │
+      │ Pipeline        │  │ RAG             │  │ Amount Limits   │
+      │ Execution       │  │ Diagnosis       │  │ Escalation      │
+      │ Simulator       │  │ Actions         │  │ Stop Rules      │
+      └────────┬────────┘  └────────┬────────┘  └────────┬────────┘
+               │                    │                    │
+               └────────────────────┼────────────────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │ Machine Learning     │
+                         │ Recovery Model       │
+                         │                      │
+                         │ Random Forest        │
+                         │                      │
+                         │ Recovery Probability │
+                         │ Expected Recovery    │
+                         │ Revenue at Risk      │
+                         └───────────┬──────────┘
+                                     │
+                                     ▼
+                         ┌──────────────────────┐
+                         │     PostgreSQL       │
+                         │                      │
+                         │ Customers            │
+                         │ Transactions         │
+                         │ Recovery Actions     │
+                         │ Recovery Outcomes    │
+                         │ Payment Attempts     │
+                         │ Audit Logs            │
+                         │ Policies             │
+                         └───────────┬──────────┘
+                                     │
+                                     │
+                    ┌────────────────┴─────────────────┐
+                    │                                  │
+                    ▼                                  ▼
+          ┌─────────────────────┐            ┌─────────────────────┐
+          │ Razorpay            │            │ Recovery / Audit    │
+          │ Payment             │            │ Records             │
+          │ Infrastructure      │            │                     │
+          │                     │            │ Recovery Outcome    │
+          │ Payment Links       │            │ Transaction Status  │
+          │ Payment Events      │            │ Payment Attempt     │
+          │ Webhooks            │            │ Audit Trail         │
+          └──────────┬──────────┘            └─────────────────────┘
+                     │
+                     │ payment_link.paid
+                     ▼
+          ┌─────────────────────┐
+          │ Razorpay Webhook    │
+          │                     │
+          │ Signature           │
+          │ Verification        │
+          │ Payment             │
+          │ Reconciliation      │
+          └──────────┬──────────┘
+                     │
+                     ▼
+          ┌─────────────────────┐
+          │ Successful Recovery │
+          │                     │
+          │ Transaction =       │
+          │ SUCCESS             │
+          │                     │
+          │ RecoveryOutcome =   │
+          │ SUCCESS             │
+          │                     │
+          │ Amount Recovered    │
+          │ Recorded            │
+          └─────────────────────┘
+
+End-to-End System Flow
+
+The complete RecoverAI workflow is:
+                    FAILED PAYMENT
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │   PostgreSQL    │
+                  │    Transaction  │
+                  └────────┬────────┘
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │ ML Prediction   │
+                  │ Random Forest   │
+                  └────────┬────────┘
+                           │
+                 Recovery Probability
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │ Revenue Risk    │
+                  │ Calculation     │
+                  └────────┬────────┘
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │ AI Strategy     │
+                  │ Gemini + RAG    │
+                  │ + LangGraph     │
+                  └────────┬────────┘
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │ Guardrails      │
+                  │ & Policies      │
+                  └────────┬────────┘
+                           │
+                    ┌──────┴──────┐
+                    │             │
+                 BLOCKED        APPROVED
+                    │             │
+                    ▼             ▼
+                 AUDIT       RECOVERY ACTION
+                                  │
+                                  ▼
+                         RAZORPAY PAYMENT LINK
+                                  │
+                                  ▼
+                         CUSTOMER COMPLETES
+                                  │
+                                  ▼
+                         RAZORPAY WEBHOOK
+                                  │
+                                  ▼
+                       SIGNATURE VERIFICATION
+                                  │
+                                  ▼
+                         PAYMENT RECONCILIATION
+                                  │
+                                  ▼
+                         RECOVERY OUTCOME
+                                  │
+                                  ▼
+                       TRANSACTION = SUCCESS
+                                  │
+                                  ▼
+                           AUDIT TRAIL
